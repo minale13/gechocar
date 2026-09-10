@@ -1,0 +1,2 @@
+components/admin/tickets-tab.tsx(499,36): error TS2552: Cannot find name 'rows'. Did you mean 'pRows'?
+components/admin/tickets-tab.tsx(499,53): error TS7006: Parameter 'row' implicitly has an 'any' type.

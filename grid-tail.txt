@@ -1,0 +1,33 @@
+                        Pend
+                      </span>
+                    )}
+                    {status === 'sold' && (
+                      <span className="absolute -right-0.5 -top-1.5 rounded bg-red-700 px-0.5 py-px text-[7px] font-black uppercase leading-none text-white">
+                        Sold
+                      </span>
+                    )}
+                    {n}
+                  </span>
+                );
+              })}
+              {visibleNumbers.length === 0 && (
+                <p className="col-span-full py-6 text-center text-sm text-slate-500">
+                  No numbers match this filter.
+                </p>
+              )}
+            </div>
+            {numbers.length > visibleNumbers.length && (
+              <p className="mt-2 text-xs text-slate-500">
+                Showing {visibleNumbers.length} of {numbers.length} numbers — refine the
+                search/filter to narrow the view.
+              </p>
+            )}
+          </>
+        )}
+      </section>
+
+      {/* ── Manual ticket sales ── */}
+      <section className="glass-card rounded-3xl border border-amber-500/20 p-5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400">
+            <Ticket className="h-5 w-5" />

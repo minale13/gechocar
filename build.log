@@ -1,0 +1,87 @@
+
+> admas@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.5
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in c:\Users\tg computer\admas\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'C:\Users\tg computer\admas\node_modules\typescript\lib\typescript.js', but to 'c:\Users\tg computer\admas\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected C:\Users\tg computer\admas\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies c:\Users\tg computer\admas\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file c:\Users\tg computer\admas\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies c:\Users\tg computer\admas\node_modules\next\dist\build\webpack-config.js
+<w>  at file c:\Users\tg computer\admas\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies c:\Users\tg computer\admas\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file c:\Users\tg computer\admas\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs c:\Users\tg computer\admas\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./app/admin/page.tsx
+518:6  Warning: React Hook useCallback has missing dependencies: 'MOCK_ITEMS' and 'MOCK_SETTINGS'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/admin/realtime-sync.tsx
+95:19  Warning: The ref value 'timersRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'timersRef.current' to a variable inside the effect, and use that variable in the cleanup function.  react-hooks/exhaustive-deps
+
+./components/admin/users-tab.tsx
+166:9  Warning: The 'users' logical expression could make the dependencies of useMemo Hook (at line 178) change on every render. To fix this, wrap the initialization of 'users' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/12) ...
+createSupabaseAdminClient: SUPABASE_SERVICE_ROLE_KEY is present but looks invalid / placeholder — falling back to the anon-key server client. Paste the real service_role key from Supabase → Project Settings → API and restart the dev server, or apply migration 016_admin_receipt_approval_rls.sql so anon-key admin writes are permitted.
+Admin user-stats API error: n [Error]: Dynamic server usage: Route /api/admin/user-stats couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (c:\Users\tg computer\admas\.next\server\chunks\948.js:1:37235)
+    at d (c:\Users\tg computer\admas\.next\server\chunks\400.js:23:9829)
+    at s (c:\Users\tg computer\admas\.next\server\chunks\112.js:1:26815)
+    at n (c:\Users\tg computer\admas\.next\server\chunks\112.js:1:28032)
+    at v (c:\Users\tg computer\admas\.next\server\chunks\112.js:1:11456)
+    at p (c:\Users\tg computer\admas\.next\server\app\api\admin\user-stats\route.js:1:820)
+    at c:\Users\tg computer\admas\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36264
+    at c:\Users\tg computer\admas\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (c:\Users\tg computer\admas\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (c:\Users\tg computer\admas\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518) {
+  description: "Route /api/admin/user-stats couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+   Generating static pages (3/12) 
+   Generating static pages (6/12) 
+   Generating static pages (9/12) 
+ ✓ Generating static pages (12/12)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ƒ /                                    24.3 kB         189 kB
+├ ○ /_not-found                          871 B            88 kB
+├ ƒ /admin                               38 kB           200 kB
+├ ƒ /api/admin                           0 B                0 B
+├ ƒ /api/admin/broadcast                 0 B                0 B
+├ ƒ /api/admin/receipts                  0 B                0 B
+├ ƒ /api/admin/ticket-matrix             0 B                0 B
+├ ƒ /api/admin/user-stats                0 B                0 B
+├ ƒ /api/admin/users                     0 B                0 B
+├ ƒ /api/cron/auto-post                  0 B                0 B
+├ ƒ /api/cron/telegram                   0 B                0 B
+├ ○ /api/supabase                        0 B                0 B
+├ ○ /api/telegram                        0 B                0 B
+├ ƒ /api/telegram/broadcast              0 B                0 B
+├ ƒ /api/telegram/webhook                0 B                0 B
+├ ƒ /api/user/sync                       0 B                0 B
+├ ○ /dashboard                           140 B          87.3 kB
+├ ○ /login                               1.43 kB        88.5 kB
+└ ○ /profile                             1.44 kB         166 kB
++ First Load JS shared by all            87.1 kB
+  ├ chunks/23-dc4e0fd6feadecf1.js        31.5 kB
+  ├ chunks/fd9d1056-ac28d0ee69459f57.js  53.6 kB
+  └ other shared chunks (total)          1.95 kB
+
+
+ƒ Middleware                             27.1 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+c:\Users\tg computer\admas>

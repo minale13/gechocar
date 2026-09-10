@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./.ticket-check.tsbuildinfo"
+  },
+  "include": [
+    "next-env.d.ts",
+    "components/app/ticket-selection.tsx",
+    "components/app/checkout-modal.tsx",
+    "components/admin/receipts-tab.tsx",
+    "components/admin/tickets-tab.tsx",
+    "components/admin/types.ts",
+    "lib/admin/management.ts"
+  ],
+  "exclude": ["node_modules"]
+}
