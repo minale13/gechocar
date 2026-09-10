@@ -379,7 +379,7 @@ async function handleStart(botToken, msg) {
     botToken,
     msg.chat.id,
     `👋 እንኳን ደህና መጡ${name}!\n\n` +
-      `🚗 <b>Admas Lottery</b> — የመኪና ጨዋታ መድረክ።\n\n` +
+      `🚗 <b>GECHO CAR</b> — የመኪና ጨዋታ መድረክ።\n\n` +
       `ከታች ያሉትን ቁልፎች ይጠቀሙ፦\n` +
       `• «${BTN_OPEN_APP}» — መተግበሪያውን በቀጥታ ይክፈቱ\n` +
       `• «${BTN_TICKETS}» — የገዙትን ትኬቶች ይመልከቱ\n` +
@@ -439,7 +439,7 @@ async function handleContact(botToken, msg) {
     `✅ <b>ስልክ ቁጥርዎ በተሳካ ሁኔታ ተመዝግቧል!</b>\n\n` +
       `📱 <code>${escapeHtml(contact.phone_number)}</code> በመገለጫዎ ላይ ተመዝግቧል።\n\n` +
       `🎉 እንኳን ደህና መጡ${from.first_name ? `, ${from.first_name}` : ""} — ` +
-      `አሁን ትክክለኛ የAdmas Lottery ተጠቃሚ ነዎት።\n\n` +
+      `አሁን ትክክለኛ የGECHO CAR ተጠቃሚ ነዎት።\n\n` +
       `👇 ሎተሪዎችን ለመመልከት «${BTN_OPEN_APP}» ቁልፉን ይጫኑ።`,
     MAIN_KEYBOARD
   );
@@ -455,7 +455,7 @@ async function handleOpenApp(botToken, msg) {
   await sendMessage(
     botToken,
     msg.chat.id,
-    `🚗 ወደ <b>Admas Lottery</b> መተግበሪያ እንኳን ደህና መጡ!\n\n` +
+    `🚗 ወደ <b>GECHO CAR</b> መተግበሪያ እንኳን ደህና መጡ!\n\n` +
       `👇 ሎተሪዎችን ለመመልከት እና ትኬት ለመግዛት ከታች ያለውን ቁልፍ ይጫኑ።`,
     buildOpenAppKeyboard()
   );

@@ -51,7 +51,7 @@ const MOCK_LOTTERIES = [
 ];
 
 const MOCK_SETTINGS = {
-  app_title: "Admas Lottery",
+  app_title: "GECHO CAR",
   logo_url: "",
   banner_image: "",
   ticket_price: 2500,
@@ -94,7 +94,7 @@ export async function GET() {
       data: {
         lotteries,
         settings: {
-          appTitle: settings.app_title || "Admas Lottery",
+          appTitle: settings.app_title || "GECHO CAR",
           logoUrl: settings.logo_url || "",
           bannerImage: settings.banner_image || "",
           ticketPrice: settings.ticket_price || "",

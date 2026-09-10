@@ -8,7 +8,7 @@ const ADMIN_EMAIL = "admaslottery@gmail.com";
 const ADMIN_EMAIL_ALT = "admaslottery@admas.com";
 const ADMIN_PASSWORD = "Admas1221..";
 
-const ADMIN_COOKIE = "admas-admin-auth";
+const ADMIN_COOKIE = "gecho-admin-auth";
 
 const setAdminSession = () => {
   if (typeof document !== "undefined") {

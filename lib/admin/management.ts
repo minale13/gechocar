@@ -578,7 +578,7 @@ export async function testTelegramConnection() {
   // test straight to that private chat, @channel / -100… ids go to channels.
   const result = await sendTelegramMessage(
     config,
-    "✅ *Admas Lottery — Test Message*\n\nYour Telegram bot connection is working correctly!"
+    "✅ *GECHO CAR — Test Message*\n\nYour Telegram bot connection is working correctly!"
   );
 
   if (!result.ok) {
@@ -689,7 +689,7 @@ export async function saveAppSettings(input: AppSettingsInput) {
   await requireAdminAccess();
   const supabase = createSupabaseServerClient();
 
-  const appTitle = input.appTitle?.trim() || "Admas Lottery";
+  const appTitle = input.appTitle?.trim() || "GECHO CAR";
   const logoUrl = (input.logoUrl ?? "").trim();
   // Database column is `banner_url`; the form/API field stays `bannerImage`.
   const bannerUrl = (input.bannerImage ?? "").trim();
@@ -1241,7 +1241,7 @@ export async function postSchedulerNow() {
     );
   }
 
-  const caption = scheduler.caption || "🔔 Admas Lottery — Scheduled Announcement";
+  const caption = scheduler.caption || "🔔 GECHO CAR — Scheduled Announcement";
   // Photo when an image is configured (base64 data URLs are uploaded as
   // multipart/form-data), with a graceful text-only fallback if the photo
   // fails — raw Telegram HTTP errors never reach the admin toast.
@@ -1434,7 +1434,7 @@ export async function runTelegramSchedulerCron() {
   }
 
   const config: TelegramConfig = { botToken, chatId };
-  const caption = (data.caption ?? "").trim() || "🔔 Admas Lottery — Scheduled Announcement";
+  const caption = (data.caption ?? "").trim() || "🔔 GECHO CAR — Scheduled Announcement";
   // Photo when an image is configured (base64 data URLs are uploaded as
   // multipart/form-data), with a graceful text-only fallback if the photo
   // fails — raw Telegram HTTP errors never crash the cron run.

@@ -96,7 +96,7 @@ export async function requireAdminAccess(): Promise<{ id: string }> {
   // server-side mutation (app settings, deletes) to throw "Unauthorized"
   // and silently fall back to mock success responses.
   const cookieStore = cookies();
-  if (cookieStore.get("admas-admin-auth")?.value === "admin") {
+  if (cookieStore.get("gecho-admin-auth")?.value === "admin") {
     return { id: "local-admin-session" };
   }
 

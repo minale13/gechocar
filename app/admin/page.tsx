@@ -96,7 +96,7 @@ function AdminDashboard() {
 // via @/components/admin/types.
 
 const MOCK_SETTINGS: AppSettings = {
-  appTitle: "Admas Lottery",
+  appTitle: "GECHO CAR",
   logoUrl: "",
   bannerImage: "",
   ticketPrice: 2500,
@@ -147,8 +147,8 @@ const MOCK_ITEMS: RaffleItem[] = [
 ];
 
 const MOCK_SUPPORT: SupportManager = {
-  username: "@admas_support",
-  contact: "@admas_support",
+  username: "@gecho_support",
+  contact: "@gecho_support",
   phone: "",
 };
 
@@ -194,7 +194,7 @@ const blankBannerForm = () => ({
 });
 
 const blankSettingsForm = (): AppSettings => ({
-  appTitle: "Admas Lottery",
+  appTitle: "GECHO CAR",
   logoUrl: "",
   bannerImage: "",
   ticketPrice: 2500,
@@ -215,7 +215,7 @@ const hasAdminSession = () => {
   if (typeof document !== "undefined") {
     const cookieMatch = document.cookie
       .split("; ")
-      .some((cookie) => cookie.startsWith("admas-admin-auth="));
+      .some((cookie) => cookie.startsWith("gecho-admin-auth="));
 
     if (cookieMatch) {
       return true;
@@ -223,7 +223,7 @@ const hasAdminSession = () => {
   }
 
   if (typeof window !== "undefined") {
-    return window.localStorage.getItem("admas-admin-auth") === "admin";
+    return window.localStorage.getItem("gecho-admin-auth") === "admin";
   }
 
   return false;
@@ -465,7 +465,7 @@ const formatIntervalLabel = (hours: number, minutes: number) => {
         const { settings, supportSettings, telegramSettings: loadedTelegram } = result.data ?? {};
         if (settings) {
           setSettingsForm({
-            appTitle: settings.appTitle || "Admas Lottery",
+            appTitle: settings.appTitle || "GECHO CAR",
             logoUrl: settings.logoUrl || "",
             bannerImage: settings.bannerImage || "",
             ticketPrice: Number(settings.ticketPrice) || 2500,
@@ -869,7 +869,7 @@ const formatIntervalLabel = (hours: number, minutes: number) => {
 
     try {
       const payload = {
-        appTitle: (settingsForm.appTitle || "").trim() || "Admas Lottery",
+        appTitle: (settingsForm.appTitle || "").trim() || "GECHO CAR",
         logoUrl: (settingsForm.logoUrl || "").trim(),
         bannerImage: (settingsForm.bannerImage || "").trim(),
         ticketPrice: Number(settingsForm.ticketPrice) || 2500,
@@ -2253,8 +2253,8 @@ const formatIntervalLabel = (hours: number, minutes: number) => {
   };
 
   const handleSignOut = () => {
-    document.cookie = "admas-admin-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    window.localStorage.removeItem("admas-admin-auth");
+    document.cookie = "gecho-admin-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    window.localStorage.removeItem("gecho-admin-auth");
     router.replace("/login");
   };
 
@@ -2309,7 +2309,7 @@ const formatIntervalLabel = (hours: number, minutes: number) => {
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#D4AF37]">
                 {t('admin')}
               </p>
-              <h1 className="text-2xl font-black text-white">Admas Lottery — Admin</h1>
+              <h1 className="text-2xl font-black text-white">GECHO CAR — Admin</h1>
             </div>
           </div>
           <div className="flex items-center gap-2">

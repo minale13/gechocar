@@ -59,12 +59,12 @@ export default async function Page() {
     support_contact?: string;
   };
   const supportHandle =
-    (supportValue.support_username || supportValue.support_contact || '@admas_support')
+    (supportValue.support_username || supportValue.support_contact || '@gecho_support')
       .trim()
       .replace(/^@/, '');
 
   const appSettings: HomeAppSettings = {
-    appTitle: settingsData?.app_title || 'Admas Lottery',
+    appTitle: settingsData?.app_title || 'GECHO CAR',
     logoUrl: settingsData?.logo_url || '',
     ticketPrice: Number(settingsData?.ticket_price) || 0,
     totalTickets: Number(settingsData?.total_tickets) || 0,

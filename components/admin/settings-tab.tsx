@@ -224,7 +224,7 @@ export function SettingsTab({
               value={settings.form.appTitle}
               onChange={(e) => settings.onFieldChange('appTitle', e.target.value)}
               className={inputClass}
-              placeholder="Admas Lottery"
+              placeholder="GECHO CAR"
             />
           </label>
           <label className="block">

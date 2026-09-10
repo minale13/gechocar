@@ -24,7 +24,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Check for local admin session cookie or Supabase session tokens
-  const adminSession = request.cookies.get("admas-admin-auth");
+  const adminSession = request.cookies.get("gecho-admin-auth");
   const supabaseSession = request.cookies.get("sb-access-token") || request.cookies.get("sb-refresh-token");
   const hasValidSession = adminSession || supabaseSession;
 

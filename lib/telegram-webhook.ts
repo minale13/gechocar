@@ -326,7 +326,7 @@ export async function handleTelegramWebhookUpdate(
           botToken,
           msg.chat.id,
           `👋 እንኳን ደህና መጡ${firstName ? `, ${escapeHtml(firstName)}` : ""}!\n\n` +
-            `🚗 <b>Admas Lottery</b> — የመኪና ጨዋታ መድረክ።\n\n` +
+            `🚗 <b>GECHO CAR</b> — የመኪና ጨዋታ መድረክ።\n\n` +
             `👇 መተግበሪያውን ለመክፈት ከታች ያለውን «🚀 Launch Mini App» ቁልፍ ይጫኑ እና ትኬት ይግዙ!`,
           buildOpenAppKeyboard()
         );
@@ -392,7 +392,7 @@ export async function handleTelegramWebhookUpdate(
           `✅ <b>ስልክ ቁጥርዎ በተሳካ ሁኔታ ተመዝግቧል!</b>\n\n` +
             `📱 <code>${escapeHtml(phoneNumber)}</code> በመገለጫዎ ላይ ተመዝግቧል።\n\n` +
             `🎉 እንኳን ደህና መጡ${firstName ? `, ${escapeHtml(firstName)}` : ""} — ` +
-            `አሁን ትክክለኛ የAdmas Lottery ተጠቃሚ ነዎት።\n\n` +
+            `አሁን ትክክለኛ የGECHO CAR ተጠቃሚ ነዎት።\n\n` +
             `👇 ሎተሪዎችን ለመመልከት «${BTN_OPEN_APP}» ቁልፉን ይጫኑ።`,
           MAIN_KEYBOARD
         );
