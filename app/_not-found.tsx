@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 export default function NotFound() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#0B141B] text-white">

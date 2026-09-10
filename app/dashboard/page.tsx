@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-[#0B141B] p-6 text-white">
