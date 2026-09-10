@@ -7,7 +7,7 @@ import { AppProviders } from './providers';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'አድማስ | Admas',
+  title: 'GECHO CAR',
   description: 'Luxury lottery and ticket buying experience',
 };
 

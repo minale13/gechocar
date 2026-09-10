@@ -1,9 +1,0 @@
-
-const MOCK_SETTINGS: AppSettings = {
-  appTitle: "Admas Lottery",
-  logoUrl: "",
-  bannerImage: "",
-  ticketPrice: 2500,
-  totalTickets: 100,
-  drawDatetime: "",
-};

@@ -1,5 +1,0 @@
-
--- Seed the single settings row so reads always find id = 1. Idempotent.
-insert into public.app_settings (id, app_title, logo_url, banner_url, ticket_price, total_tickets)
-values (1, 'Admas Lottery', '', '', 2500, 100)
-on conflict (id) do nothing;
