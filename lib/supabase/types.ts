@@ -254,6 +254,8 @@ export type Database = {
           phone_number: string | null;
           /** Chosen language from the bot's «🌐 ቋንቋ» inline keyboard (migration 032). */
           language_preference: string | null;
+          /** Short ISO/legacy code for the chosen language (migration 032). */
+          language: string | null;
           /** Personal chat id captured on /start by the bot webhook. */
           chat_id: string | null;
           /** Canonical string-typed Telegram chat id (migration 027). */
@@ -278,6 +280,7 @@ export type Database = {
           username?: string | null;
           phone_number?: string | null;
           language_preference?: string | null;
+          language?: string | null;
           chat_id?: string | null;
           telegram_chat_id?: string | null;
           photo_url?: string | null;
@@ -296,6 +299,7 @@ export type Database = {
           username?: string | null;
           phone_number?: string | null;
           language_preference?: string | null;
+          language?: string | null;
           chat_id?: string | null;
           telegram_chat_id?: string | null;
           photo_url?: string | null;

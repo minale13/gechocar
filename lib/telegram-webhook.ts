@@ -253,7 +253,12 @@ async function callTelegramApi(
     body: JSON.stringify(payload),
   });
   const data = (await response.json()) as { ok?: boolean; description?: string };
-  return { ok: !!data.ok, description: data.description };
+  if (!data.ok) {
+    // Surface Telegram errors (e.g. "query is too old", "chat not found")
+    // so the caller's try/catch can log them instead of silently succeeding.
+    throw new Error(`Telegram ${method} failed: ${data.description ?? `HTTP ${response.status}`}`);
+  }
+  return { ok: true, description: data.description };
 }
 
 /** Resolve the bot token: env first, then Admin → Telegram Bot Settings. */
@@ -336,10 +341,10 @@ function logUpsertError(table: string, err: unknown, payload: unknown): void {
 /**
  * Persist a language choice from the «🌐 ቋንቋ» inline keyboard.
  *
- * Upserts profiles.language_preference (onConflict telegram_id) and mirrors it
- * into public.users so BOTH the Mini App profile lookup and the payments /
- * tickets joins see it. Best-effort — the callback always answers even when a
- * write fails (a missing column must never break the chat UX).
+ * Upserts profiles.language_preference + profiles.language (onConflict telegram_id)
+ * and mirrors both into public.users so BOTH the Mini App profile lookup and the
+ * payments / tickets joins see it. Best-effort — the callback always answers even
+ * when a write fails (a missing column must never break the chat UX).
  */
 async function saveLanguagePreference(
   telegramId: number,
@@ -354,6 +359,7 @@ async function saveLanguagePreference(
         {
           telegram_id: telegramId,
           language_preference: langCode,
+          language: langCode,
           updated_at: updatedAt,
         },
         { onConflict: "telegram_id" }
@@ -364,7 +370,11 @@ async function saveLanguagePreference(
       await supabase
         .from("users")
         .upsert(
-          { id: telegramId, language_preference: langCode },
+          {
+            id: telegramId,
+            language_preference: langCode,
+            language: langCode,
+          },
           { onConflict: "id" }
         );
     } catch (usersErr) {
@@ -374,7 +384,7 @@ async function saveLanguagePreference(
       );
     }
     console.log(
-      `telegram-webhook: language_preference=${langCode} saved for telegram_id=${telegramId}`
+      `telegram-webhook: language_preference=${langCode} language=${langCode} saved for telegram_id=${telegramId}`
     );
     return true;
   } catch (error) {

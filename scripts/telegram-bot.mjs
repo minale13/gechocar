@@ -662,8 +662,9 @@ async function handleSupport(botToken, msg) {
 
 /**
  * Persist a language picked from the «🌐 ቋንቋ» inline keyboard into
- * profiles.language_preference (onConflict telegram_id) + mirror into
- * public.users. Best-effort — a failure still answers the callback.
+ * profiles.language_preference + profiles.language (onConflict telegram_id)
+ * + mirror into public.users. Best-effort — a failure still answers the
+ * callback.
  */
 async function saveLanguagePreference(telegramId, langCode) {
   try {
@@ -673,6 +674,7 @@ async function saveLanguagePreference(telegramId, langCode) {
         {
           telegram_id: Number(telegramId),
           language_preference: langCode,
+          language: langCode,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "telegram_id" }
@@ -687,7 +689,11 @@ async function saveLanguagePreference(telegramId, langCode) {
     await supabase
       .from("users")
       .upsert(
-        { id: Number(telegramId), language_preference: langCode },
+        {
+          id: Number(telegramId),
+          language_preference: langCode,
+          language: langCode,
+        },
         { onConflict: "id" }
       );
   } catch (usersErr) {
@@ -697,7 +703,7 @@ async function saveLanguagePreference(telegramId, langCode) {
     );
   }
 
-  console.log(`✔ language_preference=${langCode} saved for telegram_id ${telegramId}`);
+  console.log(`✔ language_preference=${langCode} language=${langCode} saved for telegram_id ${telegramId}`);
   return true;
 }
 
