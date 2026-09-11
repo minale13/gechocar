@@ -68,11 +68,11 @@ export function Header({
   return (
     // NOTE: no overflow-hidden here — the language dropdown must be allowed to
     // overlay/escape the header card so its options aren't clipped.
-    <header className="relative z-40 sticky top-0 rounded-2xl border border-amber-500/20 bg-slate-900/80 p-4 shadow-xl backdrop-blur-md">
+    <header className="relative z-40 sticky top-0 rounded-2xl border border-emerald-500/20 bg-slate-950/80 shadow-[0_0_24px_rgba(16,185,129,0.12)] backdrop-blur-md">
       {/* Luxury top lighting / glow accent */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent"
       />
 
       <div className="relative flex items-center justify-between gap-3">
@@ -83,7 +83,7 @@ export function Header({
             or the file fails to load, a stylized sparkle monogram fills the
             slot instead of leaving a hole / broken-image icon. */}
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-amber-500/40 bg-slate-800 shadow-[0_0_16px_rgba(245,208,97,0.15)]">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-emerald-500/40 bg-slate-800 shadow-[0_0_16px_rgba(16,185,129,0.25)]">
             {logoUrl && !logoFailed ? (
               <img
                 src={logoUrl}
@@ -98,7 +98,7 @@ export function Header({
               <span
                 aria-label={title}
                 role="img"
-                className="flex h-full w-full items-center justify-center text-amber-400"
+                className="flex h-full w-full items-center justify-center text-emerald-400"
               >
                 <Sparkles className="h-5 w-5" />
               </span>
@@ -106,7 +106,7 @@ export function Header({
           </div>
 
           <div className="min-w-0">
-            <p className="truncate bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-base font-black uppercase tracking-[0.08em] text-transparent">
+            <p className="truncate bg-gradient-to-r from-emerald-300 via-emerald-400 to-[#00FF87] bg-clip-text text-base font-black uppercase tracking-[0.08em] text-transparent">
               {title}
             </p>
             <p className="mt-0.5 truncate text-xs font-semibold tracking-wider text-gold-light/90">
@@ -138,8 +138,8 @@ export function Header({
             aria-haspopup="listbox"
             aria-expanded={languageOpen}
             className={cn(
-              'flex items-center gap-2 rounded-xl border border-amber-500/30 bg-slate-900/60 px-3 py-2 text-xs font-semibold text-amber-100 backdrop-blur-md transition',
-              'hover:border-amber-500/60 hover:shadow-[0_0_16px_rgba(245,208,97,0.2)]'
+              'flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-emerald-100 backdrop-blur-md transition',
+              'hover:border-emerald-500/60 hover:shadow-[0_0_16px_rgba(16,185,129,0.3)]'
             )}
           >
             <span className="text-base leading-none" aria-hidden>
@@ -147,14 +147,14 @@ export function Header({
             </span>
             <span className="hidden whitespace-nowrap sm:inline">{languageNames[language]}</span>
             <ChevronDown
-              className={cn('h-3.5 w-3.5 text-amber-300 transition-transform', languageOpen && 'rotate-180')}
+              className={cn('h-3.5 w-3.5 text-emerald-300 transition-transform', languageOpen && 'rotate-180')}
             />
           </button>
 
           {languageOpen && (
             <div
               role="listbox"
-              className="absolute right-0 top-full z-[9999] mt-2 w-44 rounded-2xl border border-amber-500/25 bg-slate-900/95 p-1 shadow-2xl backdrop-blur-md"
+              className="absolute right-0 top-full z-[9999] mt-2 w-44 rounded-2xl border border-emerald-500/25 bg-slate-950/95 p-1 shadow-2xl backdrop-blur-md"
             >
               {languageOptions.map((item) => {
                 const isActive = language === item;
@@ -170,15 +170,15 @@ export function Header({
                     className={cn(
                       'flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition',
                       isActive
-                        ? 'bg-amber-500/15 text-amber-200'
-                        : 'text-slate-200 hover:bg-amber-500/10 hover:text-amber-100'
+                        ? 'bg-emerald-500/15 text-emerald-200'
+                        : 'text-slate-200 hover:bg-emerald-500/10 hover:text-emerald-100'
                     )}
                   >
                     <span className="text-base leading-none" aria-hidden>
                       {languageFlags[item]}
                     </span>
                     <span className="flex-1">{languageNames[item]}</span>
-                    {isActive && <span className="h-2 w-2 rounded-full bg-amber-400" />}
+                    {isActive && <span className="h-2 w-2 rounded-full bg-emerald-400" />}
                   </button>
                 );
               })}

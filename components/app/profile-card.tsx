@@ -106,8 +106,8 @@ export function ProfileCard() {
             identity is unavailable. While the retry window is still open the
             card simply waits — the identity may arrive any moment. */}
         {!telegramUser && !identityPending && !loading && (
-          <div className="mt-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-3">
-            <p className="text-xs leading-relaxed text-sky-200">
+          <div className="mt-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3">
+            <p className="text-xs leading-relaxed text-emerald-200">
               ℹ️ Open this app from the Telegram bot ( «መተግበሪያ ክፈት» ) to load your
               account identity.
             </p>

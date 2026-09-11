@@ -3,14 +3,15 @@
 import { Home, ShieldCheck, Ticket, Trophy, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Each nav tab gets a distinct vibrant active color so all five buttons are
-// visually separated and instantly recognizable. Inactive tabs stay muted.
+// Each nav tab gets a distinct green-family active color so all five buttons
+// are visually separated while staying inside the Dark Emerald theme.
+// Inactive tabs stay muted.
 const navItems = [
-  { id: 'home', icon: Home, active: 'text-blue-400', activeBg: 'bg-blue-500/15 border-blue-500/50', top: 'bg-blue-500' },
-  { id: 'pending', icon: ShieldCheck, active: 'text-amber-400', activeBg: 'bg-amber-500/15 border-amber-500/50', top: 'bg-amber-500' },
-  { id: 'tickets', icon: Ticket, active: 'text-cyan-400', activeBg: 'bg-cyan-500/15 border-cyan-500/50', top: 'bg-cyan-400' },
-  { id: 'winners', icon: Trophy, active: 'text-yellow-400', activeBg: 'bg-yellow-500/15 border-yellow-500/50', top: 'bg-yellow-400' },
-  { id: 'profile', icon: UserRound, active: 'text-fuchsia-400', activeBg: 'bg-fuchsia-500/15 border-fuchsia-500/50', top: 'bg-fuchsia-500' },
+  { id: 'home', icon: Home, active: 'text-emerald-400', activeBg: 'bg-emerald-500/15 border-emerald-500/50', top: 'bg-emerald-500' },
+  { id: 'pending', icon: ShieldCheck, active: 'text-lime-400', activeBg: 'bg-lime-500/15 border-lime-500/50', top: 'bg-lime-500' },
+  { id: 'tickets', icon: Ticket, active: 'text-[#00FF87]', activeBg: 'bg-[#00FF87]/15 border-[#00FF87]/50', top: 'bg-[#00FF87]' },
+  { id: 'winners', icon: Trophy, active: 'text-teal-300', activeBg: 'bg-teal-500/15 border-teal-500/50', top: 'bg-teal-400' },
+  { id: 'profile', icon: UserRound, active: 'text-emerald-300', activeBg: 'bg-emerald-500/15 border-emerald-500/50', top: 'bg-emerald-400' },
 ] as const;
 
 export function BottomNav({
@@ -23,7 +24,7 @@ export function BottomNav({
   labels: Record<string, string>;
 }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-700/50 bg-slate-900/95 backdrop-blur-md shadow-[0_-4px_24px_rgba(0,0,0,0.45)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-emerald-500/20 bg-slate-950/95 shadow-[0_-4px_24px_rgba(0,0,0,0.5),0_0_24px_rgba(16,185,129,0.08)] backdrop-blur-md">
       <div className="mx-auto grid max-w-lg grid-cols-5 items-stretch gap-1 px-2 pt-1.5">
         {navItems.map(({ id, icon: Icon, active, activeBg, top }) => {
           const isActive = activeTab === id;

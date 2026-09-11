@@ -336,9 +336,9 @@ export function HomePage({
                         />
                       )}
 
-                      <div className="relative inline-flex shrink-0 rounded-2xl bg-gradient-to-tr from-gold-dark via-gold to-cyan p-[1.5px] shadow-[0_0_20px_rgba(234,179,8,0.4)]">
+                      <div className="relative inline-flex shrink-0 rounded-2xl bg-gradient-to-tr from-gold-dark via-gold to-cyan p-[1.5px] shadow-[0_0_20px_rgba(16,185,129,0.4)]">
                         <div className="flex h-14 w-14 items-center justify-center rounded-[15px] bg-card-dark">
-                          <Crown className="h-7 w-7 text-gold-light drop-shadow-[0_0_10px_rgba(245,208,97,0.85)]" />
+                          <Crown className="h-7 w-7 text-gold-light drop-shadow-[0_0_10px_rgba(0,255,135,0.85)]" />
                         </div>
                       </div>
                       <h3 className="mt-4 text-2xl font-black text-white">{featuredItem.title}</h3>
@@ -367,11 +367,11 @@ export function HomePage({
                       {runnerUpItems.map((item) => (
                         <div
                           key={item.id}
-                          className="rounded-2xl border border-sky-400/30 bg-card p-4 shadow-cyan-glow-soft transition hover:border-gold-light/60 hover:shadow-gold-glow"
+                          className="rounded-2xl border border-emerald-400/30 bg-card p-4 shadow-cyan-glow-soft transition hover:border-gold-light/60 hover:shadow-gold-glow"
                         >
                           {/* Metallic-gold circular rank badge + Amharic gold chip */}
                           <div className="flex items-start justify-between gap-2">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-gold-dark via-gold to-gold-light shadow-[0_0_14px_rgba(234,179,8,0.35)] ring-2 ring-gold-light/40">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-gold-dark via-gold to-gold-light shadow-[0_0_14px_rgba(16,185,129,0.35)] ring-2 ring-gold-light/40">
                               <span className="text-lg font-black leading-none text-background">
                                 {rankCircledNumber(item.rank)}
                               </span>

@@ -309,7 +309,7 @@ export function TicketSelection({ ticketPrice, totalTickets }: TicketSelectionPr
             </div>
             <button
               onClick={openCheckout}
-              className="flex w-full flex-shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 px-6 py-3 text-base font-black text-background shadow-[0_4px_16px_rgba(234,179,8,0.4)] transition hover:brightness-110 active:scale-[0.97] sm:w-auto"
+              className="flex w-full flex-shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-[#00FF87] px-6 py-3 text-base font-black text-background shadow-[0_4px_16px_rgba(16,185,129,0.4)] transition hover:brightness-110 active:scale-[0.97] sm:w-auto"
             >
               {t('continueBtn')}
             </button>
