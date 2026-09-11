@@ -16,6 +16,11 @@ import {
  * Authorization failures and Supabase errors return 200 with zeroed stats so
  * the dashboard card degrades gracefully instead of throwing.
  */
+
+// Reads Supabase data per request (and downstream helpers use cookies) —
+// never attempt a static snapshot of this handler at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const emptyStats: TelegramUserStats = {
     totalRegistered: 0,

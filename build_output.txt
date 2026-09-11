@@ -1,0 +1,61 @@
+
+> gecho-car@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.5
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./app/admin/page.tsx
+518:6  Warning: React Hook useCallback has missing dependencies: 'MOCK_ITEMS' and 'MOCK_SETTINGS'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/admin/realtime-sync.tsx
+95:19  Warning: The ref value 'timersRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'timersRef.current' to a variable inside the effect, and use that variable in the cleanup function.  react-hooks/exhaustive-deps
+
+./components/admin/users-tab.tsx
+166:9  Warning: The 'users' logical expression could make the dependencies of useMemo Hook (at line 178) change on every render. To fix this, wrap the initialization of 'users' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/12) ...
+   Generating static pages (3/12) 
+   Generating static pages (6/12) 
+   Generating static pages (9/12) 
+ ✓ Generating static pages (12/12)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ƒ /                                    24.3 kB         190 kB
+├ ƒ /_not-found                          158 B          87.3 kB
+├ ƒ /admin                               38 kB           201 kB
+├ ƒ /admin/users                         396 B          87.5 kB
+├ ƒ /api/admin                           0 B                0 B
+├ ƒ /api/admin/broadcast                 0 B                0 B
+├ ƒ /api/admin/receipts                  0 B                0 B
+├ ƒ /api/admin/ticket-matrix             0 B                0 B
+├ ƒ /api/admin/user-stats                0 B                0 B
+├ ƒ /api/admin/users                     0 B                0 B
+├ ƒ /api/cron/auto-post                  0 B                0 B
+├ ƒ /api/cron/telegram                   0 B                0 B
+├ ○ /api/supabase                        0 B                0 B
+├ ○ /api/telegram                        0 B                0 B
+├ ƒ /api/telegram/broadcast              0 B                0 B
+├ ƒ /api/telegram/webhook                0 B                0 B
+├ ƒ /api/user/sync                       0 B                0 B
+├ ƒ /dashboard                           158 B          87.3 kB
+├ ƒ /login                               1.45 kB        88.6 kB
+└ ƒ /profile                             1.46 kB         167 kB
++ First Load JS shared by all            87.1 kB
+  ├ chunks/23-dc4e0fd6feadecf1.js        31.5 kB
+  ├ chunks/fd9d1056-ac28d0ee69459f57.js  53.6 kB
+  └ other shared chunks (total)          1.95 kB
+
+
+ƒ Middleware                             27 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
