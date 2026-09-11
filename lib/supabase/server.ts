@@ -6,11 +6,17 @@ export function createSupabaseServerClient() {
   const cookieStore = cookies();
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://itcovomjihrfvanykrtf.supabase.co';
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseAnonKey) {
-    throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_ANON_KEY. Add it to .env.local from your Supabase project API settings.'
+  // NEVER throw when the anon key is missing — a throw here 500s every server
+  // render that touches Supabase (home page, admin APIs). Fall back to a
+  // non-empty placeholder so createServerClient() constructs fine and queries
+  // fail gracefully at request time (callers already handle error responses).
+  const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'public-anon-key-unconfigured';
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn(
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY is not set — Supabase requests will fail at runtime until it is configured.'
     );
   }
 

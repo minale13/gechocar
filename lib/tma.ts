@@ -34,18 +34,31 @@ export type TelegramWebApp = {
 export function getTelegramWebApp(): TelegramWebApp | null {
   if (typeof window === 'undefined') return null;
 
-  const globalWindow = window as Window & {
-    Telegram?: {
-      WebApp?: TelegramWebApp;
+  try {
+    const globalWindow = window as Window & {
+      Telegram?: {
+        WebApp?: TelegramWebApp;
+      };
     };
-  };
 
-  return globalWindow.Telegram?.WebApp ?? null;
+    return globalWindow.Telegram?.WebApp ?? null;
+  } catch {
+    // Defensive: some privacy modes / extensions make window members throw on
+    // access. The Telegram identity is optional — the app must still render.
+    return null;
+  }
 }
 
 export function getTelegramUser(): TelegramUser | null {
-  const webApp = getTelegramWebApp();
-  const user = webApp?.initDataUnsafe?.user;
+  let user: TelegramUser | undefined;
+
+  try {
+    const webApp = getTelegramWebApp();
+    user = webApp?.initDataUnsafe?.user;
+  } catch {
+    // Accessing TMA properties must never crash the app — treat as guest.
+    user = undefined;
+  }
 
   if (!user) return null;
 

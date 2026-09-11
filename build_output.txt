@@ -49,8 +49,8 @@ Route (app)                              Size     First Load JS
 ├ ƒ /login                               1.45 kB        88.6 kB
 └ ƒ /profile                             1.46 kB         167 kB
 + First Load JS shared by all            87.1 kB
-  ├ chunks/23-dc4e0fd6feadecf1.js        31.5 kB
-  ├ chunks/fd9d1056-ac28d0ee69459f57.js  53.6 kB
+  ├ chunks/23-ae4a8a78f9e11687.js        31.5 kB
+  ├ chunks/fd9d1056-5c11923b6250212a.js  53.6 kB
   └ other shared chunks (total)          1.95 kB
 
 
