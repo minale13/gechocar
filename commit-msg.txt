@@ -1,1 +1,0 @@
-Update Amharic title to ጌቾ መኪና and optimize admin API response
