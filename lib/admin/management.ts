@@ -735,9 +735,8 @@ export async function saveAppSettings(input: AppSettingsInput) {
         "logo_url",
         "banner_url",
         "draw_datetime",
-        "updated_at",
-      ],
-    })
+        "updated_at"],
+    } as any)
     .select()
     .single();
 

@@ -785,7 +785,7 @@ const formatIntervalLabel = (hours: number, minutes: number) => {
           {
             onConflict: "id",
             columns: ["id", "logo_url", "updated_at"],
-          }
+          } as any
         );
 
       if (settingsError) {
@@ -823,7 +823,7 @@ const formatIntervalLabel = (hours: number, minutes: number) => {
               {
                 onConflict: "id",
                 columns: ["id", "logo_url", "updated_at"],
-              }
+              } as any
             );
           if (!settingsError) {
             setSettingsForm((prev) => ({ ...prev, logoUrl: base64 }));
@@ -853,7 +853,7 @@ const formatIntervalLabel = (hours: number, minutes: number) => {
           {
             onConflict: "id",
             columns: ["id", "logo_url", "updated_at"],
-          }
+          } as any
         );
 
       if (error) throw error;
