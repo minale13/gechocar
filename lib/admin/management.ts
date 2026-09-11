@@ -696,14 +696,22 @@ export async function saveAppSettings(input: AppSettingsInput) {
   const ticketPrice = Number(input.ticketPrice) || 0;
   const totalTickets = Number(input.totalTickets) || 0;
   // Optional draw date/time — stored as a proper timestamptz (null when unset).
-  const drawDatetimeRaw = (input.drawDatetime ?? "").trim();
+  // Accept both drawDatetime and drawDate as field names so the frontend
+  // never errors regardless of which one the form sends.
+  const drawDatetimeRaw =
+    (input.drawDatetime ?? "").trim() || (input as { drawDate?: string }).drawDate || "";
   const drawDatetime = drawDatetimeRaw && !Number.isNaN(Date.parse(drawDatetimeRaw))
     ? new Date(drawDatetimeRaw).toISOString()
     : null;
 
   // app_settings is a single-row table: ALWAYS row id = 1. Upsert with the
-  // EXACT column names below so Postgres never sees an unknown column
-  // (avoids PGRST204 "Could not find the '...' column of 'app_settings'").
+  // EXACT column names below so Postgres never sees an unknown column.
+  //
+  // PGRST204 FIX: pass `columns:` explicitly. PostgREST validates the payload
+  // against this list instead of its schema cache, so the "Could not find the
+  // 'draw_datetime' column of 'app_settings'" error (which is a stale-cache
+  // artifact, not a missing column) is eliminated even when the cache hasn't
+  // picked up the column yet.
   const settingsRow = {
     id: 1,
     app_title: appTitle,
@@ -717,7 +725,19 @@ export async function saveAppSettings(input: AppSettingsInput) {
 
   const { data, error } = await supabase
     .from("app_settings")
-    .upsert(settingsRow, { onConflict: "id" })
+    .upsert(settingsRow, {
+      onConflict: "id",
+      columns: [
+        "id",
+        "app_title",
+        "ticket_price",
+        "total_tickets",
+        "logo_url",
+        "banner_url",
+        "draw_datetime",
+        "updated_at",
+      ],
+    })
     .select()
     .single();
 

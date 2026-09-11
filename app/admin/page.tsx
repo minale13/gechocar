@@ -782,7 +782,10 @@ const formatIntervalLabel = (hours: number, minutes: number) => {
         .from("app_settings")
         .upsert(
           { id: 1, logo_url: logoUrlToSave, updated_at: new Date().toISOString() },
-          { onConflict: "id" }
+          {
+            onConflict: "id",
+            columns: ["id", "logo_url", "updated_at"],
+          }
         );
 
       if (settingsError) {
@@ -817,7 +820,10 @@ const formatIntervalLabel = (hours: number, minutes: number) => {
             .from("app_settings")
             .upsert(
               { id: 1, logo_url: base64, updated_at: new Date().toISOString() },
-              { onConflict: "id" }
+              {
+                onConflict: "id",
+                columns: ["id", "logo_url", "updated_at"],
+              }
             );
           if (!settingsError) {
             setSettingsForm((prev) => ({ ...prev, logoUrl: base64 }));
@@ -844,7 +850,10 @@ const formatIntervalLabel = (hours: number, minutes: number) => {
         .from("app_settings")
         .upsert(
           { id: 1, logo_url: "", updated_at: new Date().toISOString() },
-          { onConflict: "id" }
+          {
+            onConflict: "id",
+            columns: ["id", "logo_url", "updated_at"],
+          }
         );
 
       if (error) throw error;

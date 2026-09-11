@@ -102,11 +102,15 @@ create table if not exists public.app_settings (
   banner_url text,
   ticket_price numeric,
   total_tickets numeric,
+  draw_datetime timestamptz,
   support jsonb,
   telegram_bot_token text,
   telegram_chat_id text,
   updated_at timestamptz default now()
 );
+
+-- Column for databases created before migration 012 / this schema refresh.
+alter table public.app_settings add column if not exists draw_datetime timestamptz;
 
 -- Seed the single settings row so reads always find id = 1. Idempotent.
 insert into public.app_settings (id, app_title, logo_url, banner_url, ticket_price, total_tickets)
