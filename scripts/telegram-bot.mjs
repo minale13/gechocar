@@ -50,7 +50,7 @@ import { createClient } from "@supabase/supabase-js";
 
 // ── Configuration ───────────────────────────────────────────────────────────
 
-const DEFAULT_WEBAPP_URL = "https://admass-lotterys-app.vercel.app";
+const DEFAULT_WEBAPP_URL = "https://gechocar.vercel.app";
 const DEFAULT_SUPABASE_URL = "https://itcovomjihrfvanykrtf.supabase.co";
 
 /** Reuse the simple .env.local parser pattern from scripts/validate-supabase-env.mjs. */
@@ -214,20 +214,27 @@ async function sendMessage(botToken, chatId, text, replyMarkup) {
 // ── Keyboard layouts ────────────────────────────────────────────────────────
 
 // Reply-keyboard button labels — a pressed button arrives back as msg.text.
-const BTN_OPEN_APP = "መተግበሪያ ክፈት";
-const BTN_TICKETS = "ትኬቶች";
-const BTN_SUPPORT = "እገዛ";
-const BTN_SHARE_PHONE = "ስልክ አጋራ";
+// (web_app / request_contact buttons open/request directly and send no text.)
+const BTN_SHARE_PHONE = "📱 ስልክ አጋራ";
+const BTN_OPEN_APP = "🚀 መተግበሪያ ክፈት";
+const BTN_TICKETS = "🎟️ ትኬቶቼ";
+const BTN_LANGUAGE = "🌐 ቋንቋ";
+const BTN_SUPPORT = "🎧 ድጋፍ";
 
 /**
  * Main menu reply keyboard (auto-resizing, persistent):
- *   Row 1: open the Mini App | Row 2: tickets + support | Row 3: share phone.
+ *   Row 1: share phone + open the Mini App (web_app — private chats only).
+ *   Row 2: tickets + language.
+ *   Row 3: support.
  */
 const MAIN_KEYBOARD = {
   keyboard: [
-    [{ text: BTN_OPEN_APP }],
-    [{ text: BTN_TICKETS }, { text: BTN_SUPPORT }],
-    [{ text: BTN_SHARE_PHONE, request_contact: true }],
+    [
+      { text: BTN_SHARE_PHONE, request_contact: true },
+      { text: BTN_OPEN_APP, web_app: { url: WEBAPP_URL } },
+    ],
+    [{ text: BTN_TICKETS }, { text: BTN_LANGUAGE }],
+    [{ text: BTN_SUPPORT }],
   ],
   resize_keyboard: true,
   is_persistent: true,
@@ -235,9 +242,10 @@ const MAIN_KEYBOARD = {
 };
 
 /**
- * Inline keyboard with a WebApp button. NOTE: the Bot API only allows
- * `web_app` buttons on INLINE keyboards (never inside ReplyKeyboardMarkup),
- * so text-button handlers reply with this to launch the Mini App.
+ * Inline keyboard with a WebApp button — fallback for old clients / manually
+ * typed text, because the persistent reply keyboard already carries the
+ * web_app button (the Bot API allows web_app on reply keyboards in private
+ * chats, Bot API 5.5+).
  */
 function buildOpenAppKeyboard() {
   return {
@@ -316,6 +324,34 @@ async function upsertProfile({ telegramId, firstName, lastName, username, phoneN
     }
     throw error;
   }
+  // Mirror the same identity into public.users (id = Telegram id) so the
+  // payments/tickets FK joins and admin receipts can attribute the verified
+  // phone. Best-effort — a missing table/column must never fail the
+  // registration.
+  try {
+    const fullName =
+      [payload.first_name, payload.last_name].filter(Boolean).join(" ").trim() || null;
+    await supabase
+      .from("users")
+      .upsert(
+        {
+          id: payload.telegram_id,
+          username: payload.username,
+          full_name: fullName,
+          phone_number: payload.phone_number,
+        },
+        { onConflict: "id" }
+      );
+    console.log(
+      `✔ mirrored phone into public.users (telegram_id ${payload.telegram_id})`
+    );
+  } catch (usersErr) {
+    console.warn(
+      `⚠ public.users mirror skipped for telegram_id ${payload.telegram_id}:`,
+      usersErr?.message ?? usersErr
+    );
+  }
+
   console.log(
     `✔ upserted ${PROFILES_TABLE} row (telegram_id ${payload.telegram_id}, ` +
       `@${username ?? "no-username"}, ${phoneNumber ?? "no-phone"})`
@@ -383,6 +419,7 @@ async function handleStart(botToken, msg) {
       `ከታች ያሉትን ቁልፎች ይጠቀሙ፦\n` +
       `• «${BTN_OPEN_APP}» — መተግበሪያውን በቀጥታ ይክፈቱ\n` +
       `• «${BTN_TICKETS}» — የገዙትን ትኬቶች ይመልከቱ\n` +
+      `• «${BTN_LANGUAGE}» — ቋንቋ ይቀይሩ\n` +
       `• «${BTN_SUPPORT}» — የድጋፍ ቡድን ያግኙ\n` +
       `• «${BTN_SHARE_PHONE}» — ስልክ ቁጥርዎን ያጋሩ\n\n` +
       `🔒 ቁጥርዎ ደህንነቱ ተጠብቆ ለማረጋገጫ ብቻ ያገለግላል።`,
@@ -509,7 +546,19 @@ async function handleTickets(botToken, msg) {
   await sendMessage(botToken, msg.chat.id, text, buildOpenAppKeyboard());
 }
 
-/** "እገዛ" → support team contact details. */
+/** "🌐 ቋንቋ" → current language + hint. */
+async function handleLanguage(botToken, msg) {
+  await sendMessage(
+    botToken,
+    msg.chat.id,
+    `🌐 <b>ቋንቋ</b>\n\n` +
+      `የአሁኑ ቋንቋ፦ <b>አማርኛ</b> 🇪🇹\n\n` +
+      `➕ ተጨማሪ ቋንቋዎች በቅርቡ ይጨመራሉ።`,
+    MAIN_KEYBOARD
+  );
+}
+
+/** "ድጋፍ" → support team contact details. */
 async function handleSupport(botToken, msg) {
   const username = await resolveSupportUsername();
   const handle = username.replace(/^@/, "");
@@ -546,6 +595,8 @@ async function handleUpdate(botToken, update) {
       await handleOpenApp(botToken, msg);
     } else if (text === BTN_TICKETS) {
       await handleTickets(botToken, msg);
+    } else if (text === BTN_LANGUAGE) {
+      await handleLanguage(botToken, msg);
     } else if (text === BTN_SUPPORT) {
       await handleSupport(botToken, msg);
     } else if (text.startsWith("/help")) {

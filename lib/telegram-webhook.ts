@@ -33,7 +33,7 @@ const TELEGRAM_API_BASE = "https://api.telegram.org/bot";
 
 /** Production Mini App URL — used by the /start "Launch Mini App" button. */
 const WEBAPP_URL =
-  process.env.WEBAPP_URL ?? "https://admass-lotterys-app.vercel.app";
+  process.env.WEBAPP_URL ?? "https://gechocar.vercel.app";
 
 /** Minimal, structural type for the only Telegram update fields we use. */
 export type TelegramUpdate = {
@@ -64,20 +64,27 @@ export type TelegramWebhookResult = {
 // ── Reply-keyboard menu (mirrors scripts/telegram-bot.mjs) ───────────────────
 
 // Reply-keyboard button labels — a pressed button arrives back as msg.text.
-const BTN_OPEN_APP = "መተግበሪያ ክፈት";
-const BTN_TICKETS = "ትኬቶች";
-const BTN_SUPPORT = "እገዛ";
-const BTN_SHARE_PHONE = "ስልክ አጋራ";
+// (web_app / request_contact buttons open/request directly and send no text.)
+const BTN_SHARE_PHONE = "📱 ስልክ አጋራ";
+const BTN_OPEN_APP = "🚀 መተግበሪያ ክፈት";
+const BTN_TICKETS = "🎟️ ትኬቶቼ";
+const BTN_LANGUAGE = "🌐 ቋንቋ";
+const BTN_SUPPORT = "🎧 ድጋፍ";
 
 /**
  * Main menu reply keyboard (auto-resizing, persistent):
- *   Row 1: open the Mini App | Row 2: tickets + support | Row 3: share phone.
+ *   Row 1: share phone + open the Mini App (web_app — private chats only).
+ *   Row 2: tickets + language.
+ *   Row 3: support.
  */
 const MAIN_KEYBOARD = {
   keyboard: [
-    [{ text: BTN_OPEN_APP }],
-    [{ text: BTN_TICKETS }, { text: BTN_SUPPORT }],
-    [{ text: BTN_SHARE_PHONE, request_contact: true }],
+    [
+      { text: BTN_SHARE_PHONE, request_contact: true },
+      { text: BTN_OPEN_APP, web_app: { url: WEBAPP_URL } },
+    ],
+    [{ text: BTN_TICKETS }, { text: BTN_LANGUAGE }],
+    [{ text: BTN_SUPPORT }],
   ],
   resize_keyboard: true,
   is_persistent: true,
@@ -85,10 +92,10 @@ const MAIN_KEYBOARD = {
 };
 
 /**
- * Inline keyboard with a single "🚀 Launch Mini App" WebApp button. The Bot
- * API only allows web_app buttons on INLINE keyboards, so the /start welcome
- * uses this as its reply_markup while the persistent reply-keyboard menu is
- * presented in a follow-up message.
+ * Inline keyboard with a single "🚀 Launch Mini App" WebApp button. Kept as a
+ * fallback for old clients / manually typed text: the persistent reply
+ * keyboard now carries the web_app button directly (allowed in private chats
+ * since Bot API 5.5).
  */
 function buildOpenAppKeyboard(): {
   inline_keyboard: Array<Array<{ text: string; web_app: { url: string } }>>;
@@ -237,8 +244,12 @@ export async function handleTelegramWebhookUpdate(
   const firstName = msg.from.first_name ?? null;
   const lastName = msg.from.last_name ?? null;
   const username = msg.from.username ?? null;
+  // Accept the shared contact when it belongs to the sender. Some clients
+  // omit contact.user_id entirely — only reject when it is present AND does
+  // not match the sender (forwarded/borrowed contact).
   const phoneNumber =
-    msg.contact && msg.contact.user_id && msg.contact.user_id === msg.from.id
+    msg.contact &&
+    (!msg.contact.user_id || msg.contact.user_id === msg.from.id)
       ? msg.contact.phone_number
       : undefined;
 
@@ -301,6 +312,32 @@ export async function handleTelegramWebhookUpdate(
           profileRow?.id ? ` row id=${profileRow.id}` : ""
         } (telegram_id=${telegramId}, chat_id=${chatId}, last_opened_at=${now})`
       );
+
+      // Mirror the registered identity into public.users too (id = Telegram
+      // id) so payments/tickets FK joins and admin receipts can attribute the
+      // verified phone. Best-effort — never fail /start on a missing table.
+      try {
+        await supabase
+          .from("users")
+          .upsert(
+            {
+              id: telegramId,
+              username: username ?? null,
+              full_name:
+                [firstName, lastName].filter(Boolean).join(" ").trim() || null,
+              phone_number: phoneNumber ?? null,
+            },
+            { onConflict: "id" }
+          );
+        console.log(
+          `telegram-webhook: mirrored phone into public.users (telegram_id=${telegramId})`
+        );
+      } catch (usersErr) {
+        console.warn(
+          `telegram-webhook: public.users mirror skipped for ${telegramId}:`,
+          usersErr
+        );
+      }
     }
 
     console.log(
@@ -319,40 +356,32 @@ export async function handleTelegramWebhookUpdate(
 
     try {
       if (text.startsWith("/start")) {
-        // 1) IMMEDIATE welcome (sendMessage) with a "Launch Mini App" button.
-        //    Sent right after the Supabase upsert so the user is greeted and
-        //    can one-tap open the Mini App straight from the chat.
+        // Welcome + the persistent reply-keyboard menu in one message. The
+        // keyboard itself now carries the "🚀 መተግበሪያ ክፈት" web_app button
+        // (Bot API 5.5+, private chats), so /start needs no inline fallback.
         await sendHtmlMessage(
           botToken,
           msg.chat.id,
           `👋 እንኳን ደህና መጡ${firstName ? `, ${escapeHtml(firstName)}` : ""}!\n\n` +
             `🚗 <b>GECHO CAR</b> — የመኪና ጨዋታ መድረክ።\n\n` +
-            `👇 መተግበሪያውን ለመክፈት ከታች ያለውን «🚀 Launch Mini App» ቁልፍ ይጫኑ እና ትኬት ይግዙ!`,
-          buildOpenAppKeyboard()
-        );
-
-        // 2) Follow-up with the main menu reply keyboard so «ትኬቶች»,
-        //    «እገዛ» and «ስልክ አጋራ» stay one tap away.
-        await sendHtmlMessage(
-          botToken,
-          msg.chat.id,
-          `ከታች ካሉት ቁልፎች ይምረጡ፦\n` +
+            `ከታች ያሉትን ቁልፎች ይጠቀሙ፦\n` +
+            `• «${BTN_OPEN_APP}» — መተግበሪያውን በቀጥታ ይክፈቱ\n` +
             `• «${BTN_TICKETS}» — የገዙትን ትኬቶች ይመልከቱ\n` +
+            `• «${BTN_LANGUAGE}» — ቋንቋ ይቀይሩ\n` +
             `• «${BTN_SUPPORT}» — የድጋፍ ቡድን ያግኙ\n` +
-            `• «${BTN_SHARE_PHONE}» — ስልክ ቁጥርዎን ያጋሩ`,
+            `• «${BTN_SHARE_PHONE}» — ስልክ ቁጥርዎን ያጋሩ\n\n` +
+            `🔒 ቁጥርዎ ደህንነቱ ተጠብቆ ለማረጋገጫ ብቻ ያገለግላል።`,
           MAIN_KEYBOARD
         );
       } else if (text === BTN_OPEN_APP) {
-        // «መተግበሪያ ክፈት» — the reply keyboard itself cannot carry a web_app
-        // button, so guide the user to the inline "🚀 Launch Mini App" button
-        // attached to this very message.
+        // «🚀 መተግበሪያ ክፈት» typed manually (a real button press opens the
+        // Mini App directly via the reply keyboard's web_app) — fall back to
+        // the inline "🚀 Launch Mini App" button attached to this message.
         await sendHtmlMessage(
           botToken,
           msg.chat.id,
           `🚀 <b>መተግበሪያውን ለመክፈት</b>\n\n` +
-            `ከዚህ መልእክት ታች ያለውን «🚀 Launch Mini App» ቁልፍ ይጫኑ።\n\n` +
-            `💡 ማሳሰቢያ፦ የቁልፍ ሰሌዳው «${BTN_OPEN_APP}» መጫን ብቻ በቂ አይሆንም — ` +
-            `የመክፈቻው ቁልፍ በመልእክቱ ውስጥ ያለውን ወደ ታች ይጫኑ።`,
+            `ከዚህ መልእክት ታች ያለውን «🚀 Launch Mini App» ቁልፍ ይጫኑ።`,
           buildOpenAppKeyboard()
         );
       } else if (text === BTN_TICKETS) {
@@ -383,6 +412,16 @@ export async function handleTelegramWebhookUpdate(
           botToken,
           msg.chat.id,
           supportLines.join("\n"),
+          MAIN_KEYBOARD
+        );
+      } else if (text === BTN_LANGUAGE) {
+        // «🌐 ቋንቋ» — language picker (Amharic is the current language).
+        await sendHtmlMessage(
+          botToken,
+          msg.chat.id,
+          `🌐 <b>ቋንቋ</b>\n\n` +
+            `የአሁኑ ቋንቋ፦ <b>አማርኛ</b> 🇪🇹\n\n` +
+            `➕ ተጨማሪ ቋንቋዎች በቅርቡ ይጨመራሉ።`,
           MAIN_KEYBOARD
         );
       } else if (phoneNumber) {
