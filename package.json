@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "bot": "node scripts/telegram-bot.mjs"
+    "bot": "node scripts/telegram-bot.mjs",
+    "set-webhook": "node scripts/set-telegram-webhook.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.0",

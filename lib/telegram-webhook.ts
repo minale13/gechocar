@@ -1,9 +1,9 @@
 /**
  * Telegram Bot Webhook handler — /start user registration.
  *
- * Receives raw Telegram Bot API updates (POSTed by Telegram to
- * /api/telegram/webhook) and, for EVERY message a human sends to the bot
- * (especially /start), captures:
+ * Receives raw Telegram Bot API updates (POSTed by Telegram to the webhook
+ * route — canonical mount `/api/telegram`, legacy alias `/api/telegram/webhook`)
+ * and, for EVERY message a human sends to the bot (especially /start), captures:
  *
  *   chat_id    — message.chat.id  (the user's personal chat with the bot;
  *                the broadcast target for sendMessage/sendPhoto)
@@ -449,4 +449,74 @@ export async function handleTelegramWebhookUpdate(
     telegramId,
     chatId,
   };
+}
+// ── Shared HTTP webhook receiver (used by /api/telegram + /api/telegram/webhook) ─
+
+/**
+ * Structural request shape consumed by handleTelegramWebhookRequest() so the
+ * Next.js route files stay Next-free (lib remains importable by tooling).
+ */
+export type TelegramWebhookHttpRequest = {
+  headers: { get(name: string): string | null };
+  json(): Promise<unknown>;
+};
+
+export type TelegramWebhookHttpResult = {
+  status: number;
+  body: Record<string, unknown>;
+};
+
+/**
+ * Request → response bridge shared by BOTH webhook route mounts so they can
+ * never drift apart:
+ *   • /api/telegram         — canonical (recommended for setWebhook)
+ *   • /api/telegram/webhook — legacy alias, kept so an already-registered
+ *                             webhook URL keeps working during the switch.
+ *
+ * Validates the optional X-Telegram-Bot-Api-Secret-Token, parses the JSON
+ * update and delegates to handleTelegramWebhookUpdate(). ALWAYS returns a
+ * JSON result — Telegram retries non-200 responses forever, so even handler
+ * failures are acknowledged with 200 after logging.
+ */
+export async function handleTelegramWebhookRequest(
+  request: TelegramWebhookHttpRequest,
+): Promise<TelegramWebhookHttpResult> {
+  // Optional guard: when TELEGRAM_WEBHOOK_SECRET is set, Telegram includes it
+  // as the X-Telegram-Bot-Api-Secret-Token header (setWebhook secret_token).
+  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (secret) {
+    const provided = request.headers.get("x-telegram-bot-api-secret-token") ?? "";
+    if (provided !== secret) {
+      console.warn("telegram-webhook: rejected request — invalid secret token.");
+      return { status: 401, body: { ok: false, error: "Unauthorized" } };
+    }
+  }
+
+  let update: TelegramUpdate;
+  try {
+    update = (await request.json()) as TelegramUpdate;
+  } catch {
+    // Malformed payload — Telegram's retry won't fix a broken body.
+    return { status: 400, body: { ok: false, error: "Invalid JSON body." } };
+  }
+
+  try {
+    const result = await handleTelegramWebhookUpdate(update);
+    console.log(
+      `telegram-webhook: update ${update.update_id ?? "?"} handled` +
+        (result.registered
+          ? ` (registered chat ${result.chatId})`
+          : " (no registration needed)") +
+        (result.supabaseFailed
+          ? " — ⚠ Supabase upsert failed; still acking 200 so Telegram keeps delivering updates"
+          : "")
+    );
+  } catch (error) {
+    // Never let a handler failure bubble into a non-200: Telegram would retry
+    // the same update forever. Log it and still acknowledge.
+    console.error("telegram-webhook: handler failed — acking anyway:", error);
+  }
+
+  // Telegram considers the update handled on 200 — always acknowledge.
+  return { status: 200, body: { ok: true } };
 }
