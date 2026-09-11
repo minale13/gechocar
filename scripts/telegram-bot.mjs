@@ -271,12 +271,12 @@ const LANG_OPTIONS = [
   { data: "lang_ti", code: "ti", flag: "🇪🇹", name: "Tigrinya" },
 ];
 
-/** Short confirmation line per language (shown in the toast + chat). */
-const LANG_CONFIRM = {
-  am: "ቋንቋዎ ተመረጠ ✓",
-  en: "Language preference saved ✓",
-  om: "Afaan keessan filatameera ✓",
-  ti: "ቋንቋኹ ተመሪጹ ✓",
+/** Answer message shown in the SELECTED language (toast + chat confirmation). */
+const LANG_ANSWER = {
+  am: "ቋንቋ ወደ አማርኛ ተቀይሯል! 🇪🇹",
+  en: "Language switched to English! 🇬🇧",
+  om: "Afaan gara Afaan Oromootti jijjirameera! 🇪🇹",
+  ti: "ቋንቋ ናብ ትግርኛ ተቀይሩ! 🇪🇹",
 };
 
 function buildLanguageKeyboard() {
@@ -292,6 +292,50 @@ function buildLanguageKeyboard() {
       })),
     ],
   };
+}
+
+/**
+ * Main reply keyboard for a SPECIFIC sender. When a language preference is
+ * known, the web_app button URL carries ?lang=<code> so the Mini App opens
+ * directly in the user's language (the Mini App also falls back to the
+ * Supabase-profile preference on load).
+ */
+function buildMainKeyboard(langCode) {
+  const appUrl = langCode
+    ? `${WEBAPP_URL}?lang=${encodeURIComponent(langCode)}`
+    : WEBAPP_URL;
+  return {
+    keyboard: [
+      [
+        { text: BTN_SHARE_PHONE, request_contact: true },
+        { text: BTN_OPEN_APP, web_app: { url: appUrl } },
+      ],
+      [{ text: BTN_TICKETS }, { text: BTN_LANGUAGE }],
+      [{ text: BTN_SUPPORT }],
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+    one_time_keyboard: false,
+  };
+}
+
+/** Read the sender's saved language code from profiles.language_preference
+ * (best-effort — null when unset, missing column, or the read fails). */
+async function resolveUserLanguage(telegramId) {
+  try {
+    const { data, error } = await supabase
+      .from(PROFILES_TABLE)
+      .select("language_preference")
+      .eq("telegram_id", Number(telegramId))
+      .maybeSingle();
+    if (error || !data) return null;
+    const lang = typeof data?.language_preference === "string"
+      ? data.language_preference.trim()
+      : "";
+    return lang || null;
+  } catch {
+    return null;
+  }
 }
 
 // ── Supabase upsert ─────────────────────────────────────────────────────────
@@ -450,6 +494,7 @@ async function fetchUserTickets(telegramId) {
 /** /start → greet and show the main reply-keyboard menu. */
 async function handleStart(botToken, msg) {
   const name = msg.from?.first_name ? `, ${msg.from.first_name}` : "";
+  const userLang = msg.from?.id ? await resolveUserLanguage(msg.from.id) : null;
   await sendMessage(
     botToken,
     msg.chat.id,
@@ -462,7 +507,7 @@ async function handleStart(botToken, msg) {
       `• «${BTN_SUPPORT}» — የድጋፍ ቡድን ያግኙ\n` +
       `• «${BTN_SHARE_PHONE}» — ስልክ ቁጥርዎን ያጋሩ\n\n` +
       `🔒 ቁጥርዎ ደህንነቱ ተጠብቆ ለማረጋገጫ ብቻ ያገለግላል።`,
-    MAIN_KEYBOARD
+    buildMainKeyboard(userLang)
   );
 }
 
@@ -679,7 +724,7 @@ async function handleCallbackQuery(botToken, cb) {
   try {
     await callTelegramApi("answerCallbackQuery", botToken, {
       callback_query_id: cb.id,
-      text: `${option.flag} ${option.name} — ${LANG_CONFIRM[option.code]}`,
+      text: LANG_ANSWER[option.code],
     });
   } catch (err) {
     console.warn("✖ answerCallbackQuery failed:", err?.message ?? err);
@@ -687,8 +732,7 @@ async function handleCallbackQuery(botToken, cb) {
 
   const confirmation =
     `🌐 <b>ቋንቋ</b>\n\n` +
-    `✅ <b>${option.flag} ${escapeHtml(option.name)}</b>\n` +
-    `${LANG_CONFIRM[option.code]}\n\n` +
+    `✅ ${LANG_ANSWER[option.code]}\n\n` +
     `🖥️ መተግበሪያው በዚህ ቋንቋ ይከፈታል — Mini App opens in this language.`;
 
   try {

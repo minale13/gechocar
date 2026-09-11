@@ -32,6 +32,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // callback_query taps (the «🌐 ቋንቋ» inline keyboard: lang_am / lang_en /
+  // lang_om / lang_ti) are dispatched inside handleTelegramWebhookRequest →
+  // handleTelegramWebhookUpdate, which persists the choice to Supabase and
+  // answers the callback in the selected language.
   const { status, body } = await handleTelegramWebhookRequest(request);
   return NextResponse.json(body, { status });
 }

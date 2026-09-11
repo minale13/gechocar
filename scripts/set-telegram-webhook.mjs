@@ -108,16 +108,39 @@ async function main() {
     return;
   }
 
+  const allowedUpdates = ["message", "callback_query"];
   const payload = {
     url: webhookUrl,
-    allowed_updates: ["message", "callback_query"],
+    allowed_updates: allowedUpdates,
     drop_pending_updates: false,
   };
-  if (secret) payload.secret_token = secret;
+
+  // Preserve existing settings when re-running so we never accidentally
+  // remove a secret_token configured on the server (matching the route's
+  // TELEGRAM_WEBHOOK_SECRET guard) or drop other update types.
+  if (secret) {
+    payload.secret_token = secret;
+  } else {
+    try {
+      const current = await callApi("getWebhookInfo");
+      if (current?.secret_token) payload.secret_token = current.secret_token;
+      if (Array.isArray(current?.allowed_updates) && current.allowed_updates.length) {
+        const merged = new Set([...allowedUpdates, ...current.allowed_updates]);
+        payload.allowed_updates = [...merged];
+      }
+    } catch (infoErr) {
+      console.warn(
+        "⚠ Could not read current webhook info — registering without a secret_token."
+      );
+    }
+  }
 
   const ok = await callApi("setWebhook", payload);
-  console.log(`✔ setWebhook → ${webhookUrl}${secret ? " (with secret_token)" : ""}`);
-  console.log(`  result: ${JSON.stringify(ok)}`);
+  console.log(
+    `✔ setWebhook → ${webhookUrl}` +
+      (payload.secret_token ? " (with secret_token)" : " (no secret configured)")
+  );
+  console.log("  result:", JSON.stringify(ok));
 
   const info = await callApi("getWebhookInfo");
   console.log("\n• Current webhook info:");

@@ -62,7 +62,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     void (async () => {
       try {
         const startParam = getTelegramWebApp()?.initDataUnsafe?.start_param ?? '';
-        if (!applyLanguage(normalizeLanguage(startParam))) {
+        // Also accept ?lang=am on the launch URL — the bot's reply keyboard
+        // sends https://gechocar.vercel.app?lang=<code> once a preference is
+        // saved (see buildMainKeyboard in the bot handlers).
+        const urlLang =
+          typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('lang')
+            : null;
+        const viaParam = normalizeLanguage(startParam) ?? normalizeLanguage(urlLang);
+        if (!applyLanguage(viaParam)) {
           const user = getTelegramUser();
           if (user) {
             const profile = await fetchUserProfile(user);
