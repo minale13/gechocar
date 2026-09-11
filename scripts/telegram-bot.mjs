@@ -255,6 +255,45 @@ function buildOpenAppKeyboard() {
   };
 }
 
+// ── Language picker (inline keyboard) ───────────────────────────────────────
+
+/**
+ * The four supported Mini App languages — labels mirror lib/translations.ts
+ * (en / am / om / ti). callback_data encodes the choice (lang_am / lang_en /
+ * lang_om / lang_ti); the Mini App reads the SAME code from
+ * profiles.language_preference (or a ?startapp=lang_xx link) to open in the
+ * chosen language.
+ */
+const LANG_OPTIONS = [
+  { data: "lang_am", code: "am", flag: "🇪🇹", name: "አማርኛ" },
+  { data: "lang_en", code: "en", flag: "🇬🇧", name: "English" },
+  { data: "lang_om", code: "om", flag: "🇪🇹", name: "Afaan Oromoo" },
+  { data: "lang_ti", code: "ti", flag: "🇪🇹", name: "Tigrinya" },
+];
+
+/** Short confirmation line per language (shown in the toast + chat). */
+const LANG_CONFIRM = {
+  am: "ቋንቋዎ ተመረጠ ✓",
+  en: "Language preference saved ✓",
+  om: "Afaan keessan filatameera ✓",
+  ti: "ቋንቋኹ ተመሪጹ ✓",
+};
+
+function buildLanguageKeyboard() {
+  return {
+    inline_keyboard: [
+      LANG_OPTIONS.slice(0, 2).map((o) => ({
+        text: `${o.flag} ${o.name}`,
+        callback_data: o.data,
+      })),
+      LANG_OPTIONS.slice(2, 4).map((o) => ({
+        text: `${o.flag} ${o.name}`,
+        callback_data: o.data,
+      })),
+    ],
+  };
+}
+
 // ── Supabase upsert ─────────────────────────────────────────────────────────
 
 /**
@@ -546,15 +585,13 @@ async function handleTickets(botToken, msg) {
   await sendMessage(botToken, msg.chat.id, text, buildOpenAppKeyboard());
 }
 
-/** "🌐 ቋንቋ" → current language + hint. */
+/** "🌐 ቋንቋ" → inline keyboard with the four supported languages. */
 async function handleLanguage(botToken, msg) {
   await sendMessage(
     botToken,
     msg.chat.id,
-    `🌐 <b>ቋንቋ</b>\n\n` +
-      `የአሁኑ ቋንቋ፦ <b>አማርኛ</b> 🇪🇹\n\n` +
-      `➕ ተጨማሪ ቋንቋዎች በቅርቡ ይጨመራሉ።`,
-    MAIN_KEYBOARD
+    `🌐 <b>ቋንቋ</b>\n\nቋንቋዎን ይምረጡ፦`,
+    buildLanguageKeyboard()
   );
 }
 
@@ -578,8 +615,114 @@ async function handleSupport(botToken, msg) {
   );
 }
 
+/**
+ * Persist a language picked from the «🌐 ቋንቋ» inline keyboard into
+ * profiles.language_preference (onConflict telegram_id) + mirror into
+ * public.users. Best-effort — a failure still answers the callback.
+ */
+async function saveLanguagePreference(telegramId, langCode) {
+  try {
+    const { error } = await supabase
+      .from(PROFILES_TABLE)
+      .upsert(
+        {
+          telegram_id: Number(telegramId),
+          language_preference: langCode,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "telegram_id" }
+      );
+    if (error) throw error;
+  } catch (err) {
+    console.error("✖ saveLanguagePreference (profiles) failed:", err?.message ?? err);
+    return false;
+  }
+
+  try {
+    await supabase
+      .from("users")
+      .upsert(
+        { id: Number(telegramId), language_preference: langCode },
+        { onConflict: "id" }
+      );
+  } catch (usersErr) {
+    console.warn(
+      `⚠ public.users language mirror skipped for telegram_id ${telegramId}:`,
+      usersErr?.message ?? usersErr
+    );
+  }
+
+  console.log(`✔ language_preference=${langCode} saved for telegram_id ${telegramId}`);
+  return true;
+}
+
+/** Inline-keyboard callback (language pick) → save + answer + confirm. */
+async function handleCallbackQuery(botToken, cb) {
+  const data = (cb?.data ?? "").trim();
+  const option = LANG_OPTIONS.find((o) => o.data === data);
+  const fromId = cb?.from?.id;
+  const chatId = cb?.message?.chat?.id;
+  const messageId = cb?.message?.message_id;
+
+  if (!cb?.id) return;
+
+  if (!option || !fromId || !chatId) {
+    // Unknown / malformed tap — acknowledge so the button spinner stops.
+    await callTelegramApi("answerCallbackQuery", botToken, {
+      callback_query_id: cb.id,
+    });
+    return;
+  }
+
+  await saveLanguagePreference(fromId, option.code);
+
+  try {
+    await callTelegramApi("answerCallbackQuery", botToken, {
+      callback_query_id: cb.id,
+      text: `${option.flag} ${option.name} — ${LANG_CONFIRM[option.code]}`,
+    });
+  } catch (err) {
+    console.warn("✖ answerCallbackQuery failed:", err?.message ?? err);
+  }
+
+  const confirmation =
+    `🌐 <b>ቋንቋ</b>\n\n` +
+    `✅ <b>${option.flag} ${escapeHtml(option.name)}</b>\n` +
+    `${LANG_CONFIRM[option.code]}\n\n` +
+    `🖥️ መተግበሪያው በዚህ ቋንቋ ይከፈታል — Mini App opens in this language.`;
+
+  try {
+    await callTelegramApi("editMessageText", botToken, {
+      chat_id: chatId,
+      message_id: messageId,
+      text: confirmation,
+      parse_mode: "HTML",
+      reply_markup: buildLanguageKeyboard(),
+    });
+  } catch (err) {
+    console.warn(
+      "✖ editMessageText failed — sending a fresh confirmation:",
+      err?.message ?? err
+    );
+    await sendMessage(botToken, chatId, confirmation, buildLanguageKeyboard());
+  }
+}
+
 /** Route one Telegram update to the right handler. */
 async function handleUpdate(botToken, update) {
+  // Inline-keyboard taps (e.g. «🌐 ቋንቋ») arrive as callback_query updates.
+  if (update.callback_query) {
+    try {
+      await handleCallbackQuery(botToken, update.callback_query);
+    } catch (err) {
+      console.error(
+        `✖ Error handling callback ${update.update_id}:`,
+        err?.message ?? err
+      );
+    }
+    return;
+  }
+
   const msg = update.message;
   if (!msg || !msg.from || msg.from.is_bot) return;
 
@@ -671,7 +814,7 @@ async function main() {
       const updates = await callTelegramApi("getUpdates", botToken, {
         offset,
         timeout: 30,
-        allowed_updates: ["message"],
+        allowed_updates: ["message", "callback_query"],
       });
       for (const update of updates) {
         offset = update.update_id + 1; // acknowledge the update

@@ -16,6 +16,7 @@ import { toDbUserId } from '@/lib/user-identity';
 
 export async function syncMiniAppSession(
   telegramUser: TelegramUser | null,
+  languagePreference?: string | null,
 ): Promise<boolean> {
   if (!telegramUser || telegramUser.id === undefined || telegramUser.id === null) {
     return false;
@@ -38,6 +39,9 @@ export async function syncMiniAppSession(
         lastName: telegramUser.last_name ?? null,
         username: telegramUser.username ?? null,
         photoUrl: telegramUser.photo_url ?? null,
+        // Language picked in the Mini App (or by the bot's «🌐 ቋንቋ» inline
+        // keyboard) — persisted to profiles.language_preference by /api/user/sync.
+        languagePreference: languagePreference ?? null,
       }),
     });
 

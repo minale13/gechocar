@@ -24,6 +24,8 @@ export type UserProfile = {
   last_name: string | null;
   username: string | null;
   phone_number: string | null;
+  /** Chosen language from the bot's «🌐 ቋንቋ» inline keyboard (migration 032). */
+  language_preference: string | null;
   photo_url: string | null;
 };
 
@@ -52,7 +54,7 @@ export async function fetchUserProfile(
     // cleanly, and a text-typed drift column also matches (PostgREST casts).
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, telegram_id, first_name, last_name, username, phone_number, photo_url')
+      .select('id, telegram_id, first_name, last_name, username, phone_number, language_preference, photo_url')
       .eq('telegram_id', telegramId.includes('.') ? telegramId : Number(telegramId))
       .maybeSingle();
 

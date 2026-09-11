@@ -51,6 +51,23 @@ export type TelegramUpdate = {
     text?: string;
     contact?: { phone_number?: string; user_id?: number };
   };
+  /** Inline-keyboard taps (e.g. the «🌐 ቋንቋ» language picker). */
+  callback_query?: {
+    id?: string;
+    from?: {
+      id?: number;
+      is_bot?: boolean;
+      first_name?: string;
+      last_name?: string;
+      username?: string;
+    };
+    message?: {
+      message_id?: number;
+      chat?: { id?: number; type?: string };
+      text?: string;
+    };
+    data?: string;
+  };
 };
 
 export type TelegramWebhookResult = {
@@ -105,6 +122,52 @@ function buildOpenAppKeyboard(): {
   };
 }
 
+// ── Language picker (inline keyboard) ───────────────────────────────────────
+
+/**
+ * The four supported Mini App languages — the labels mirror
+ * lib/translations.ts (en / am / om / ti). callback_data encodes the choice
+ * (lang_am / lang_en / lang_om / lang_ti); the Mini App reads the SAME code
+ * from profiles.language_preference (or a ?startapp=lang_xx link) to open in
+ * the chosen language.
+ */
+const LANG_OPTIONS: Array<{
+  data: string;
+  code: string; // Mini App Language code (lib/translations.ts)
+  flag: string;
+  name: string; // native display name
+}> = [
+  { data: "lang_am", code: "am", flag: "🇪🇹", name: "አማርኛ" },
+  { data: "lang_en", code: "en", flag: "🇬🇧", name: "English" },
+  { data: "lang_om", code: "om", flag: "🇪🇹", name: "Afaan Oromoo" },
+  { data: "lang_ti", code: "ti", flag: "🇪🇹", name: "Tigrinya" },
+];
+
+/** Short confirmation line per language (shown in the toast + chat). */
+const LANG_CONFIRM: Record<string, string> = {
+  am: "ቋንቋዎ ተመረጠ ✓",
+  en: "Language preference saved ✓",
+  om: "Afaan keessan filatameera ✓",
+  ti: "ቋንቋኹ ተመሪጹ ✓",
+};
+
+function buildLanguageKeyboard(): {
+  inline_keyboard: Array<Array<{ text: string; callback_data: string }>>;
+} {
+  return {
+    inline_keyboard: [
+      LANG_OPTIONS.slice(0, 2).map((o) => ({
+        text: `${o.flag} ${o.name}`,
+        callback_data: o.data,
+      })),
+      LANG_OPTIONS.slice(2, 4).map((o) => ({
+        text: `${o.flag} ${o.name}`,
+        callback_data: o.data,
+      })),
+    ],
+  };
+}
+
 /** Escape HTML entities for parse_mode: "HTML" messages. */
 function escapeHtml(s: unknown): string {
   return String(s ?? "")
@@ -130,6 +193,21 @@ async function sendHtmlMessage(
       reply_markup: replyMarkup ?? undefined,
     }),
   });
+}
+
+/** Low-level Bot API call wrapper (used for answerCallbackQuery / editMessageText). */
+async function callTelegramApi(
+  botToken: string,
+  method: string,
+  payload: Record<string, unknown>
+): Promise<{ ok: boolean; description?: string }> {
+  const response = await fetch(`${TELEGRAM_API_BASE}${botToken}/${method}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = (await response.json()) as { ok?: boolean; description?: string };
+  return { ok: !!data.ok, description: data.description };
 }
 
 /** Resolve the bot token: env first, then Admin → Telegram Bot Settings. */
@@ -210,6 +288,134 @@ function logUpsertError(table: string, err: unknown, payload: unknown): void {
 }
 
 /**
+ * Persist a language choice from the «🌐 ቋንቋ» inline keyboard.
+ *
+ * Upserts profiles.language_preference (onConflict telegram_id) and mirrors it
+ * into public.users so BOTH the Mini App profile lookup and the payments /
+ * tickets joins see it. Best-effort — the callback always answers even when a
+ * write fails (a missing column must never break the chat UX).
+ */
+async function saveLanguagePreference(
+  telegramId: number,
+  langCode: string
+): Promise<boolean> {
+  try {
+    const supabase = createSupabaseAdminClient();
+    const updatedAt = new Date().toISOString();
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          telegram_id: telegramId,
+          language_preference: langCode,
+          updated_at: updatedAt,
+        },
+        { onConflict: "telegram_id" }
+      );
+    if (error) throw error;
+
+    try {
+      await supabase
+        .from("users")
+        .upsert(
+          { id: telegramId, language_preference: langCode },
+          { onConflict: "id" }
+        );
+    } catch (usersErr) {
+      console.warn(
+        `telegram-webhook: public.users language mirror skipped for ${telegramId}:`,
+        usersErr
+      );
+    }
+    console.log(
+      `telegram-webhook: language_preference=${langCode} saved for telegram_id=${telegramId}`
+    );
+    return true;
+  } catch (error) {
+    console.error("telegram-webhook: saveLanguagePreference failed:", error);
+    return false;
+  }
+}
+
+/**
+ * Handle a callback_query tap on the language inline keyboard:
+ *   1) persist the chosen code to Supabase (profiles + users),
+ *   2) answerCallbackQuery (stops the button spinner, shows a toast),
+ *   3) edit the inline message to the selected language (fallback: new message).
+ */
+async function handleLanguageCallbackQuery(
+  callbackQuery: NonNullable<TelegramUpdate["callback_query"]>
+): Promise<TelegramWebhookResult> {
+  const data = (callbackQuery.data ?? "").trim();
+  const option = LANG_OPTIONS.find((o) => o.data === data);
+  const telegramId = callbackQuery.from?.id ? Number(callbackQuery.from.id) : 0;
+  const chatId = callbackQuery.message?.chat?.id;
+  const messageId = callbackQuery.message?.message_id;
+
+  // Not a language tap (or malformed) — nothing to persist, still handled.
+  if (!option || !telegramId || !chatId) {
+    return { registered: false };
+  }
+
+  await saveLanguagePreference(telegramId, option.code);
+
+  const botToken = await resolveBotToken();
+  if (botToken && callbackQuery.id && messageId) {
+    try {
+      await callTelegramApi("answerCallbackQuery", botToken, {
+        callback_query_id: callbackQuery.id,
+        text: `${option.flag} ${option.name} — ${LANG_CONFIRM[option.code]}`,
+      });
+    } catch (ackErr) {
+      console.warn("telegram-webhook: answerCallbackQuery failed:", ackErr);
+    }
+
+    const confirmation =
+      `🌐 <b>ቋንቋ</b>\n\n` +
+      `✅ <b>${option.flag} ${escapeHtml(option.name)}</b>\n` +
+      `${LANG_CONFIRM[option.code]}\n\n` +
+      `🖥️ The Mini App («${BTN_OPEN_APP}») will open in this language.`;
+
+    try {
+      // Replace the picker text with the confirmation (keeps the keyboard so
+      // switching later is one tap).
+      await callTelegramApi("editMessageText", botToken, {
+        chat_id: chatId,
+        message_id: messageId,
+        text: confirmation,
+        parse_mode: "HTML",
+        reply_markup: buildLanguageKeyboard(),
+      });
+    } catch (editErr) {
+      // Old clients / already-edited message → send a fresh confirmation.
+      console.warn(
+        "telegram-webhook: editMessageText failed — sending confirmation:",
+        editErr
+      );
+      try {
+        await sendHtmlMessage(
+          botToken,
+          chatId,
+          confirmation,
+          buildLanguageKeyboard()
+        );
+      } catch (sendErr) {
+        console.warn(
+          "telegram-webhook: language confirmation send failed:",
+          sendErr
+        );
+      }
+    }
+  } else {
+    console.log(
+      `telegram-webhook: language pref saved for ${telegramId} (${option.code}) — no bot token to reply.`
+    );
+  }
+
+  return { registered: false };
+}
+
+/**
  * Handle a single Telegram update.
  *
  * 1) Extracts msg.chat.id (chat_id) and msg.from.id (telegram_id) and UPSERTS
@@ -221,6 +427,12 @@ function logUpsertError(table: string, err: unknown, payload: unknown): void {
 export async function handleTelegramWebhookUpdate(
   update: TelegramUpdate
 ): Promise<TelegramWebhookResult> {
+  // Inline-keyboard taps (e.g. the «🌐 ቋንቋ» language picker) arrive as
+  // callback_query updates — handle them BEFORE the message-only guard.
+  if (update?.callback_query) {
+    return await handleLanguageCallbackQuery(update.callback_query);
+  }
+
   const msg = update?.message;
   if (!msg || !msg.chat?.id || !msg.from?.id || msg.from.is_bot) {
     // Non-message updates (callback_query, my_chat_member, bots…) → nothing
@@ -415,14 +627,13 @@ export async function handleTelegramWebhookUpdate(
           MAIN_KEYBOARD
         );
       } else if (text === BTN_LANGUAGE) {
-        // «🌐 ቋንቋ» — language picker (Amharic is the current language).
+        // «🌐 ቋንቋ» — show the inline language picker. The persistent reply
+        // keyboard stays on screen; a choice arrives as a callback_query.
         await sendHtmlMessage(
           botToken,
           msg.chat.id,
-          `🌐 <b>ቋንቋ</b>\n\n` +
-            `የአሁኑ ቋንቋ፦ <b>አማርኛ</b> 🇪🇹\n\n` +
-            `➕ ተጨማሪ ቋንቋዎች በቅርቡ ይጨመራሉ።`,
-          MAIN_KEYBOARD
+          `🌐 <b>ቋንቋ</b>\n\nቋንቋዎን ይምረጡ፦`,
+          buildLanguageKeyboard()
         );
       } else if (phoneNumber) {
         await sendHtmlMessage(

@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     username?: string | null;
     photoUrl?: string | null;
     chatId?: string | number | null;
+    languagePreference?: string | null;
   } | null = null;
 
   try {
@@ -73,6 +74,12 @@ export async function POST(request: NextRequest) {
     // Only persist the avatar when Telegram actually provides one — never
     // clobber a previously saved photo_url with null.
     if (body?.photoUrl) payload.photo_url = body.photoUrl;
+
+    // Persist the language picked in the Mini App (or by the bot's «🌐 ቋንቋ»
+    // inline keyboard) so it survives across opens. Non-destructive: absent
+    // languagePreference never clears an already-saved preference.
+    const lang = (body?.languagePreference ?? "").trim();
+    if (lang) payload.language_preference = lang;
 
     const { error } = await supabase
       .from("profiles")

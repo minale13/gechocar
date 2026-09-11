@@ -110,7 +110,7 @@ async function main() {
 
   const payload = {
     url: webhookUrl,
-    allowed_updates: ["message"],
+    allowed_updates: ["message", "callback_query"],
     drop_pending_updates: false,
   };
   if (secret) payload.secret_token = secret;

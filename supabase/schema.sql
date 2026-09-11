@@ -13,9 +13,13 @@ create table if not exists public.users (
   username text,
   full_name text,
   phone_number text,
+  language_preference text,
   role public.user_role not null default 'user',
   created_at timestamptz not null default now()
 );
+
+-- Column for databases created before migration 032.
+alter table public.users add column if not exists language_preference text;
 
 create table if not exists public.lotteries (
   id uuid primary key default uuid_generate_v4(),
@@ -306,6 +310,7 @@ create table if not exists public.profiles (
   last_name text,
   username text,
   phone_number text,
+  language_preference text,
   -- Personal chat id — broadcast target.  chat_id is the original column
   -- (migration 025); telegram_chat_id is the canonical string-typed id
   -- (migration 027) set by sync / webhook / bot on every registration path.
@@ -339,6 +344,7 @@ alter table public.profiles add column if not exists is_registered boolean not n
 alter table public.profiles add column if not exists telegram_chat_id text;
 alter table public.profiles add column if not exists is_blocked boolean not null default false;
 alter table public.profiles add column if not exists wallet_balance numeric not null default 0;
+alter table public.profiles add column if not exists language_preference text;
 
 alter table public.profiles enable row level security;
 
