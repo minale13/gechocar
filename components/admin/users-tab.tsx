@@ -38,7 +38,13 @@ const usersFetcher = async (url: string): Promise<DirectoryUser[]> => {
   if (!res.ok || !json?.success) {
     throw new Error(json?.error || `Request failed (${res.status})`);
   }
-  return Array.isArray(json.data?.users) ? (json.data.users as DirectoryUser[]) : [];
+  // Clean format: { success: true, users: [...] }. Falls back to the legacy
+  // nested data.users shape so an older deployment response still parses.
+  return Array.isArray(json.users)
+    ? (json.users as DirectoryUser[])
+    : Array.isArray(json.data?.users)
+      ? (json.data.users as DirectoryUser[])
+      : [];
 };
 
 /** ISO string → readable local date, or "—" when unset. */

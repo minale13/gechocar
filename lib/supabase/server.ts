@@ -48,6 +48,24 @@ export function createSupabaseServerClient() {
  * Only use this for privileged admin operations (e.g. approving/rejecting
  * receipts and syncing ticket rows) — never expose it to the browser.
  */
+/**
+ * True when a plausible SUPABASE_SERVICE_ROLE_KEY is configured (legacy JWT
+ * `eyJ…` or new-format `sb_secret…`, never a placeholder). Single source of
+ * truth shared by createSupabaseAdminClient() and the admin API routes so a
+ * missing/invalid key can degrade gracefully (empty directory reads) instead
+ * of surfacing as hard failures.
+ */
+export function isSupabaseServiceRoleConfigured(): boolean {
+  const trimmed = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").trim();
+  const looksLikePlaceholder =
+    trimmed.length < 24 ||
+    /your-|placeholder|put-|xxx|replace|change-me|TODO|^["']|["']$/.test(trimmed);
+  const isPlausible =
+    trimmed.startsWith("eyJ") || // legacy JWT service_role key
+    trimmed.startsWith("sb_secret"); // new-format service role secret key
+  return trimmed !== "" && !looksLikePlaceholder && isPlausible;
+}
+
 export function createSupabaseAdminClient() {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://itcovomjihrfvanykrtf.supabase.co';
@@ -59,14 +77,7 @@ export function createSupabaseAdminClient() {
   //     {"message":"Invalid API key"}
   // Treat clearly-invalid placeholder values as unset and fall back to the
   // anon-key server client (which uses the working publishable key).
-  const trimmed = (serviceRoleKey ?? "").trim();
-  const looksLikePlaceholder =
-    trimmed.length < 24 ||
-    /your-|placeholder|put-|xxx|replace|change-me|TODO|^["']|["']$/.test(trimmed);
-  const isPlausible =
-    trimmed.startsWith("eyJ") || // legacy JWT service_role key
-    trimmed.startsWith("sb_secret"); // new-format service role secret key
-  const validServiceRoleKey = trimmed !== "" && !looksLikePlaceholder && isPlausible;
+  const validServiceRoleKey = isSupabaseServiceRoleConfigured();
 
   if (!validServiceRoleKey) {
     if (serviceRoleKey) {
@@ -85,7 +96,9 @@ export function createSupabaseAdminClient() {
     return createSupabaseServerClient();
   }
 
-  return createClient(supabaseUrl, trimmed, {
+  // Re-trim here: isSupabaseServiceRoleConfigured() validated the key, and the
+  // exact trimmed value is what createSupabaseAdminClient previously passed.
+  return createClient(supabaseUrl, serviceRoleKey!.trim(), {
     auth: {
       // The service role should never rely on browser sessions or token refresh.
       persistSession: false,

@@ -63,7 +63,7 @@ export function Header({
   // Dynamic title comes from Admin → App Settings (app_settings.logo_url /
   // app_title). Falls back to a branded default when unset.
   const title = appTitle || 'GECHO CAR';
-  const subtitle = 'ጌኮ ካር';
+  const subtitle = 'ጌቾ መኪና';
 
   return (
     // NOTE: no overflow-hidden here — the language dropdown must be allowed to

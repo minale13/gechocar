@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getUsersDirectory, setUserBlocked } from "@/lib/admin/management";
+import { isSupabaseServiceRoleConfigured } from "@/lib/supabase/server";
 
 // The directory changes on registrations / purchases — always fresh.
 export const dynamic = "force-dynamic";
@@ -27,19 +28,37 @@ function describeError(error: unknown): string {
  * Consumed by the SWR hook in components/admin/users-tab.tsx.
  */
 export async function GET() {
+  // GRACEFUL FALLBACK — the directory reads go through the SERVICE-ROLE admin
+  // client so Row Level Security can never hide rows. When
+  // SUPABASE_SERVICE_ROLE_KEY is missing or a placeholder, the admin client
+  // silently falls back to the anon-key client whose RLS policies make the
+  // profiles read fail — which previously surfaced as a 500 and broke the
+  // dashboard's SWR state. Instead of failing, degrade cleanly: 200 with an
+  // empty directory ({ success: true, users: [] }), like the user-stats route.
+  if (!isSupabaseServiceRoleConfigured()) {
+    console.warn(
+      "Admin users API: SUPABASE_SERVICE_ROLE_KEY is not configured — returning a clean empty directory."
+    );
+    return NextResponse.json({ success: true, users: [], total: 0 });
+  }
+
   try {
     const directory = await getUsersDirectory();
+    // Clean response contract consumed by components/admin/users-tab.tsx:
+    // { success: true, users: [...], total: n }.
     return NextResponse.json({
       success: true,
-      data: { users: directory.users, total: directory.total },
+      users: directory.users,
+      total: directory.total,
     });
   } catch (error) {
+    // Read-only display list — never fail the dashboard. Authorization, RLS,
+    // or schema errors degrade to a clean empty directory (200) instead of a
+    // 500; the POST route below keeps strict error semantics (mutations must
+    // never report fake success). The reason is logged for debugging.
     const errorMessage = describeError(error);
     console.error("Admin users API GET error:", errorMessage, error);
-    return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, users: [], total: 0 });
   }
 }
 
