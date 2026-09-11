@@ -711,43 +711,52 @@ async function handleCallbackQuery(botToken, cb) {
 
   if (!cb?.id) return;
 
-  if (!option || !fromId || !chatId) {
-    // Unknown / malformed tap — acknowledge so the button spinner stops.
-    await callTelegramApi("answerCallbackQuery", botToken, {
-      callback_query_id: cb.id,
-    });
-    return;
-  }
-
-  await saveLanguagePreference(fromId, option.code);
-
+  // ── 1) ALWAYS answer the callback FIRST ─────────────────────────────────
+  // answerCallbackQuery is the ONLY way to acknowledge a callback_query
+  // update to Telegram. If we skip it (e.g. when saveLanguagePreference
+  // throws below), the client keeps the button spinner spinning forever and
+  // the tap feels dead. We answer even for unknown/malformed taps — the
+  // `text` field is omitted for those so no toast is shown.
   try {
     await callTelegramApi("answerCallbackQuery", botToken, {
       callback_query_id: cb.id,
-      text: LANG_ANSWER[option.code],
+      text: option ? LANG_ANSWER[option.code] : undefined,
     });
   } catch (err) {
     console.warn("✖ answerCallbackQuery failed:", err?.message ?? err);
   }
 
+  // ── 2) Validate the tap ──────────────────────────────────────────────────
+  // Not a language tap (or malformed) — nothing to persist; the callback was
+  // already answered above so the spinner stops.
+  if (!option || !fromId || !chatId) return;
+
+  // ── 3) Persist the choice ────────────────────────────────────────────────
+  await saveLanguagePreference(fromId, option.code);
+
+  // ── 4) Confirm in-chat (edit the picker message; fallback to new message) ─
   const confirmation =
     `🌐 <b>ቋንቋ</b>\n\n` +
     `✅ ${LANG_ANSWER[option.code]}\n\n` +
     `🖥️ መተግበሪያው በዚህ ቋንቋ ይከፈታል — Mini App opens in this language.`;
 
-  try {
-    await callTelegramApi("editMessageText", botToken, {
-      chat_id: chatId,
-      message_id: messageId,
-      text: confirmation,
-      parse_mode: "HTML",
-      reply_markup: buildLanguageKeyboard(),
-    });
-  } catch (err) {
-    console.warn(
-      "✖ editMessageText failed — sending a fresh confirmation:",
-      err?.message ?? err
-    );
+  if (messageId) {
+    try {
+      await callTelegramApi("editMessageText", botToken, {
+        chat_id: chatId,
+        message_id: messageId,
+        text: confirmation,
+        parse_mode: "HTML",
+        reply_markup: buildLanguageKeyboard(),
+      });
+    } catch (err) {
+      console.warn(
+        "✖ editMessageText failed — sending a fresh confirmation:",
+        err?.message ?? err
+      );
+      await sendMessage(botToken, chatId, confirmation, buildLanguageKeyboard());
+    }
+  } else {
     await sendMessage(botToken, chatId, confirmation, buildLanguageKeyboard());
   }
 }

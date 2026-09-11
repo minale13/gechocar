@@ -398,24 +398,36 @@ async function handleLanguageCallbackQuery(
   const chatId = callbackQuery.message?.chat?.id;
   const messageId = callbackQuery.message?.message_id;
 
-  // Not a language tap (or malformed) — nothing to persist, still handled.
-  if (!option || !telegramId || !chatId) {
-    return { registered: false };
-  }
-
-  await saveLanguagePreference(telegramId, option.code);
-
+  // ── 1) ALWAYS answer the callback FIRST ─────────────────────────────────
+  // answerCallbackQuery is the ONLY way to acknowledge a callback_query
+  // update to Telegram. If we skip it (e.g. by returning early on a guard
+  // below), the client keeps the button's loading spinner spinning forever
+  // and the tap feels dead. We answer even for unknown/malformed taps — the
+  // `text` field is omitted for those so no toast is shown.
   const botToken = await resolveBotToken();
-  if (botToken && callbackQuery.id && messageId) {
+  if (botToken && callbackQuery.id) {
     try {
       await callTelegramApi("answerCallbackQuery", botToken, {
         callback_query_id: callbackQuery.id,
-        text: LANG_ANSWER[option.code],
+        text: option ? LANG_ANSWER[option.code] : undefined,
       });
     } catch (ackErr) {
       console.warn("telegram-webhook: answerCallbackQuery failed:", ackErr);
     }
+  }
 
+  // ── 2) Validate the tap ──────────────────────────────────────────────────
+  // Not a language tap (or malformed) — nothing to persist; the callback was
+  // already answered above so the spinner stops.
+  if (!option || !telegramId || !chatId) {
+    return { registered: false };
+  }
+
+  // ── 3) Persist the choice ────────────────────────────────────────────────
+  await saveLanguagePreference(telegramId, option.code);
+
+  // ── 4) Confirm in-chat (edit the picker message; fallback to new message) ─
+  if (botToken && messageId) {
     const confirmation =
       `🌐 <b>ቋንቋ</b>\n\n` +
       `✅ ${LANG_ANSWER[option.code]}\n\n` +
@@ -453,7 +465,7 @@ async function handleLanguageCallbackQuery(
     }
   } else {
     console.log(
-      `telegram-webhook: language pref saved for ${telegramId} (${option.code}) — no bot token to reply.`
+      `telegram-webhook: language pref saved for ${telegramId} (${option.code}) — no bot token / message to reply to.`
     );
   }
 
