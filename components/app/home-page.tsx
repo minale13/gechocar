@@ -77,6 +77,10 @@ const rankAmharicLabel = (rank: number): string => RANK_AMHARIC[rank] ?? `ዕጣ
 
 const formatNumber = (value: number) => value.toLocaleString();
 
+// Fallback shown when app_settings (row id = 1) is not yet populated, so the
+// silver-blue price banner never renders "0 ETB" on a fresh database.
+const DEFAULT_TICKET_PRICE = 2500;
+
 const AUTOPLAY_INTERVAL_MS = 5000;
 
 export function HeroCarousel({ banners }: { banners: HomeHeroBanner[] }) {
@@ -306,12 +310,12 @@ export function HomePage({
                     shows, even before any prize exists. */}
                 <div className="flex justify-center">
                   <div className="silver-blue-banner inline-flex items-center gap-3 px-6 py-3">
-                    <Ticket className="h-5 w-5 text-background" />
+                    <Ticket className="h-5 w-5 flex-shrink-0 text-background" />
                     <span className="text-xs font-black uppercase tracking-[0.2em] text-background">
-                      {t('ticketPrice')}
+                      {t('ticketPrice')}:
                     </span>
                     <span className="text-xl font-black leading-none text-background">
-                      {formatNumber(settings?.ticketPrice ?? 0)}
+                      {formatNumber(settings?.ticketPrice && settings.ticketPrice > 0 ? settings.ticketPrice : DEFAULT_TICKET_PRICE)}
                     </span>
                     <span className="text-sm font-bold leading-none text-background/80">{t('etb')}</span>
                   </div>

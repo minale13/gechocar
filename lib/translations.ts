@@ -8,7 +8,7 @@ export const translations = {
     winners: "Winners",
     profile: "Profile",
     language: "Language",
-    ticketPrice: "Ticket price",
+    ticketPrice: "Ticket Price",
     buyTicket: "Buy Ticket",
     viewTickets: "View tickets",
     howItWorks: "How it works",

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} antialiased`}>
         {/* Telegram WebApp SDK — provides window.Telegram.WebApp for the Mini App
             identity (initDataUnsafe.user). The script is OPTIONAL by design:
             if it fails to load (offline, blocked, plain browser), every access
